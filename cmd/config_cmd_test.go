@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"archcore-cli/internal/config"
@@ -123,6 +125,11 @@ func TestSetSettingsValue_SyncToOnPrem_NoURL(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error switching to on-prem without archcore_url")
 	}
+	// Verify the error message guides the user to use 'config set archcore_url'.
+	want := "archcore config set archcore_url"
+	if !strings.Contains(err.Error(), want) {
+		t.Errorf("error message %q should contain %q", err.Error(), want)
+	}
 }
 
 func TestSetSettingsValue_SyncToOnPrem_WithURL(t *testing.T) {
@@ -184,10 +191,27 @@ func TestSetSettingsValue_ArchcoreURL(t *testing.T) {
 	}
 }
 
-func TestSetSettingsValue_ArchcoreURL_NotOnPrem(t *testing.T) {
-	s := config.NewCloudSettings()
-	if err := setSettingsValue(s, "archcore_url", "http://x"); err == nil {
-		t.Fatal("expected error setting archcore_url when sync!=on-prem")
+func TestSetSettingsValue_ArchcoreURL_SwitchesToOnPrem(t *testing.T) {
+	tests := []struct {
+		name     string
+		initial  *config.Settings
+	}{
+		{"from cloud", config.NewCloudSettings()},
+		{"from none", config.NewNoneSettings()},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := tt.initial
+			if err := setSettingsValue(s, "archcore_url", "http://x:8080"); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if s.Sync != config.SyncTypeOnPrem {
+				t.Errorf("Sync = %q, want %q", s.Sync, config.SyncTypeOnPrem)
+			}
+			if s.ArchcoreURL != "http://x:8080" {
+				t.Errorf("ArchcoreURL = %q, want %q", s.ArchcoreURL, "http://x:8080")
+			}
+		})
 	}
 }
 
@@ -198,10 +222,136 @@ func TestSetSettingsValue_ArchcoreURL_Empty(t *testing.T) {
 	}
 }
 
+func TestGetSettingsValue_Language(t *testing.T) {
+	tests := []struct {
+		name string
+		s    *config.Settings
+		want string
+	}{
+		{"default when empty", config.NewNoneSettings(), "en"},
+		{"set value", &config.Settings{Sync: "none", Language: "ru"}, "ru"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getSettingsValue(tt.s, "language")
+			if err != nil {
+				t.Fatalf("error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetSettingsValue_Language(t *testing.T) {
+	s := config.NewNoneSettings()
+	if err := setSettingsValue(s, "language", "ru"); err != nil {
+		t.Fatal(err)
+	}
+	if s.Language != "ru" {
+		t.Errorf("Language = %q, want %q", s.Language, "ru")
+	}
+}
+
+func TestSetSettingsValue_Language_Empty(t *testing.T) {
+	s := config.NewNoneSettings()
+	if err := setSettingsValue(s, "language", ""); err == nil {
+		t.Fatal("expected error for empty language")
+	}
+}
+
+func TestConfigSetLanguage_Persists(t *testing.T) {
+	dir := setupConfigTest(t, config.NewNoneSettings())
+
+	s, err := config.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := setSettingsValue(s, "language", "ja"); err != nil {
+		t.Fatal(err)
+	}
+	if err := config.Save(dir, s); err != nil {
+		t.Fatal(err)
+	}
+
+	s2, err := config.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s2.Language != "ja" {
+		t.Errorf("Language = %q, want %q", s2.Language, "ja")
+	}
+}
+
 func TestSetSettingsValue_UnknownKey(t *testing.T) {
 	s := config.NewNoneSettings()
 	if err := setSettingsValue(s, "unknown", "val"); err == nil {
 		t.Fatal("expected error for unknown key")
+	}
+}
+
+// --- runConfig CLI flow tests ---
+
+func TestRunConfig_NoArgs_PrintsSync(t *testing.T) {
+	dir := setupConfigTest(t, config.NewNoneSettings())
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(origDir) })
+
+	cmd := newConfigCmd()
+	cmd.SetArgs([]string{})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunConfig_GetProjectID_ComingSoon(t *testing.T) {
+	dir := setupConfigTest(t, config.NewNoneSettings())
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(origDir) })
+
+	cmd := newConfigCmd()
+	cmd.SetArgs([]string{"get", "project_id"})
+	err = cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for coming soon guard")
+	}
+	if !strings.Contains(err.Error(), "not available yet") {
+		t.Errorf("error = %q, want it to contain %q", err.Error(), "not available yet")
+	}
+}
+
+func TestRunConfig_SetSync_ComingSoon(t *testing.T) {
+	dir := setupConfigTest(t, config.NewNoneSettings())
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chdir(origDir) })
+
+	cmd := newConfigCmd()
+	cmd.SetArgs([]string{"set", "sync", "cloud"})
+	err = cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for coming soon guard")
+	}
+	if !strings.Contains(err.Error(), "not available yet") {
+		t.Errorf("error = %q, want it to contain %q", err.Error(), "not available yet")
 	}
 }
 
@@ -228,5 +378,38 @@ func TestConfigSetAndLoad(t *testing.T) {
 	}
 	if s2.ProjectID == nil || *s2.ProjectID != 77 {
 		t.Errorf("ProjectID = %v, want 77", s2.ProjectID)
+	}
+}
+
+func TestConfigSetArchcoreURL_SwitchesAndPersists(t *testing.T) {
+	// Start with sync=none settings.
+	dir := setupConfigTest(t, config.NewNoneSettings())
+
+	s, err := config.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Setting archcore_url should auto-switch to on-prem.
+	if err := setSettingsValue(s, "archcore_url", "http://localhost:8080"); err != nil {
+		t.Fatalf("setSettingsValue: %v", err)
+	}
+	if s.Sync != config.SyncTypeOnPrem {
+		t.Fatalf("Sync = %q, want %q", s.Sync, config.SyncTypeOnPrem)
+	}
+
+	// Should save and reload successfully.
+	if err := config.Save(dir, s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	s2, err := config.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if s2.Sync != config.SyncTypeOnPrem {
+		t.Errorf("Sync = %q, want %q", s2.Sync, config.SyncTypeOnPrem)
+	}
+	if s2.ArchcoreURL != "http://localhost:8080" {
+		t.Errorf("ArchcoreURL = %q, want %q", s2.ArchcoreURL, "http://localhost:8080")
 	}
 }

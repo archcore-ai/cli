@@ -43,12 +43,6 @@ func TestGenerateTemplate(t *testing.T) {
 			wantContains: []string{"## Overview", "## Content", "## Examples", "## Related Resources", "## Best Practices", "## FAQ"},
 		},
 		{
-			name:         "Project template",
-			documentType: TypeProject,
-			wantEmpty:    false,
-			wantContains: []string{"## Overview", "## Purpose", "## Architecture", "## Getting Started", "## Key Components", "## Related Resources", "## Development"},
-		},
-		{
 			name:         "Task-Type template",
 			documentType: TypeTaskType,
 			wantEmpty:    false,
@@ -237,30 +231,6 @@ func TestGenerateDocTemplate(t *testing.T) {
 	}
 }
 
-func TestGenerateProjectTemplate(t *testing.T) {
-	template := generateProjectTemplate()
-
-	requiredSections := []string{
-		"## Overview",
-		"## Purpose",
-		"## Architecture",
-		"## Getting Started",
-		"## Key Components",
-		"## Related Resources",
-		"## Development",
-	}
-
-	for _, section := range requiredSections {
-		if !strings.Contains(template, section) {
-			t.Errorf("Project template missing section: %q", section)
-		}
-	}
-
-	if !strings.Contains(template, "|") {
-		t.Error("Project template should include tables")
-	}
-}
-
 func TestGenerateTaskTypeTemplate(t *testing.T) {
 	template := generateTaskTypeTemplate()
 
@@ -377,11 +347,6 @@ func TestTemplateStructure(t *testing.T) {
 			minLength:    600,
 		},
 		{
-			name:         "Project has substantial content",
-			documentType: TypeProject,
-			minLength:    1200,
-		},
-		{
 			name:         "TaskType has substantial content",
 			documentType: TypeTaskType,
 			minLength:    1000,
@@ -420,7 +385,7 @@ func TestTemplateStructure(t *testing.T) {
 }
 
 func TestTemplateMarkdownFormatting(t *testing.T) {
-	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeProject, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan}
+	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan}
 
 	for _, typ := range types {
 		t.Run(string(typ), func(t *testing.T) {

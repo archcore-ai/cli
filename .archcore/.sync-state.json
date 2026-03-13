@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "files": {
+    "cli-ui/building-the-cli.guide.md": "ab1466d9ee5d17ae9d73ca545cc8ca6b1d7dd11864034ff964676de88afde64d",
+    "cli-ui/project-deletion-via-repo.idea.md": "88984fdff4a5e8af797a4d4322ed6e4c17e81c541c9a35959f2db29a2a9055cb",
+    "dir/archcore-directory-structure.guide.md": "39972d4391ce460a25d7560a85b9e0f706d9d3e356626ba855db3887c45992cb",
+    "dir/free-form-directory-rules.rule.md": "f9db0f527900e33f49cd5ae3bc0db71e1c30b0cbbda87baa3f3922e55be56f17",
+    "dir/free-form-directory-structure.adr.md": "ab2fbd9114a6695ae197b56fcaf7a91ea93407c6aec2dcf603285b634e34ab71",
+    "integrations/agent-hooks-integration.guide.md": "54509050bc6accbbcb0170c8f2c4df56c3708da8959b58ff6ac24de0dd8dbc52",
+    "integrations/backup-invalid-configs.adr.md": "a96a5ad0cc21737560940e073c6ae4d62dd22ec82db3a87bee19bbf55ac9567a",
+    "integrations/cli-hooks-reference.doc.md": "54d8340e368ff89b38f859be6323c75d818f329fe36b653c2bd2818af3e2910e",
+    "integrations/supported-ai-agents.doc.md": "151308f93087835af5a026297b2a1fb2bee8cf9808b095e83965a5b34f1dbca6",
+    "sync/one-way-push-sync-strategy.adr.md": "911131db9ba1bf575ab9d3f091138d07b27bca2fbcddd411ca2f8c2a881a57c5",
+    "sync/sync-command-implementation.plan.md": "9f35747efe19d7d39f7561c0e2f9ad2300c8bc0fedbab4fb21d58dc31164c072",
+    "sync/sync-design.idea.md": "fdba2863c7fed87a6ca87750ef1d36f78130802dc4fba70b18e22b943c375a3f",
+    "sync/sync-how-it-works.guide.md": "393a152643c6de561f3f7f9bc594b669b0c84766ecbae269d9d61fd7cbd15d96",
+    "sync/sync-manifest-update-on-success-only.rule.md": "49dc9ff0f029dc1436d15a8ff60d56d19c830ce2df5c5ed3357221db9472373f",
+    "sync/sync-mode-field-validation.rule.md": "766604fee1572f7a2f24a1c1ed917009eff8909f21aebeceff38eca948547ba7",
+    "sync/sync-path-security.rule.md": "256768e99f55331cd857ffa3056668f2a5a5f9be7f5a998bca59137a93265937",
+    "sync/sync-source-of-truth.rule.md": "c36526edd5d7e9bcd8b692227a3dfa3810fe46b49d9c35b67497574e22bf14b3"
+  },
+  "relations": [
+    {
+      "source": "cli-ui/language-setting-no-mcp-effect.cpat.md",
+      "target": "cli-ui/language-setting.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/optional-settings-omit-defaults.rule.md",
+      "target": "cli-ui/language-setting.idea.md",
+      "type": "implements"
+    },
+    {
+      "source": "sync/sync-mode-field-validation.rule.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli-ui/building-the-cli.guide.md",
+      "target": "cli-ui/language-setting.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli-ui/building-the-cli.guide.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "integrations/cli-hooks-reference.doc.md",
+      "target": "integrations/disable-stop-and-prompt-hooks.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "release/how-to-release.guide.md",
+      "target": "release/release-infrastructure.doc.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "release/install-script-usage.guide.md",
+      "target": "release/release-infrastructure.doc.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "release/release-infrastructure.doc.md",
+      "target": "release/version-injection-via-ldflags.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli-ui/version-in-banners.idea.md",
+      "target": "cli-ui/building-the-cli.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "cli-ui/version-in-banners.idea.md",
+      "target": "cli-ui/language-setting.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli-ui/version-in-banners.idea.md",
+      "target": "cli-ui/project-deletion-via-repo.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/version-check-proxy.idea.md",
+      "target": "cli/archcore-first-search-priority.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/version-check-proxy.idea.md",
+      "target": "cli/feature-gating-at-command-layer.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/version-check-proxy.idea.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/update-version-check-strategy.rfc.md",
+      "target": "cli/archcore-first-search-priority.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/update-version-check-strategy.rfc.md",
+      "target": "cli/feature-gating-at-command-layer.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/update-version-check-strategy.rfc.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/update-version-check-strategy.rfc.md",
+      "target": "cli/version-check-proxy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/update-version-check-strategy.rfc.md",
+      "target": "cli/version-check-proxy.idea.md",
+      "type": "extends"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "cli/archcore-first-search-priority.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "cli/feature-gating-at-command-layer.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "cli/update-version-check-strategy.rfc.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "cli/version-check-proxy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "release/release-infrastructure.doc.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "cli/self-update-command.guide.md",
+      "target": "release/install-script-usage.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "telemetry/telemetry-provider-selection.rfc.md",
+      "target": "telemetry/posthog-telemetry-implementation.plan.md",
+      "type": "related"
+    }
+  ]
+}

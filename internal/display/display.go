@@ -17,7 +17,7 @@ var (
 )
 
 func Banner() string {
-	return Title.Render("archcore.ai") + Dim.Render(" — context engineering platform")
+	return Title.Render("Archcore") + Dim.Render(" — System Context Platform")
 }
 
 func WelcomeBanner() string {
@@ -31,8 +31,8 @@ func WelcomeBanner() string {
 	logo := Logo.Render(strings.Join(logoLines, "\n"))
 
 	textLines := []string{
-		Title.Render("Welcome to Archcore CLI"),
-		Dim.Render("Context engineering platform"),
+		Title.Render("Archcore — System Context Platform"),
+		Dim.Render("Keeps humans and AI in sync with your system"),
 		Dim.Render("https://archcore.ai"),
 	}
 	text := strings.Join(textLines, "\n")
@@ -58,4 +58,8 @@ func HintLine(msg string) string {
 
 func KeyValue(key, value string) string {
 	return fmt.Sprintf("  %s %s", Dim.Render(key+":"), value)
+}
+
+func HookConnectedLine(docCount int) string {
+	return fmt.Sprintf("[archcore] MCP connected · %d docs", docCount)
 }

@@ -1,0 +1,4 @@
+
+[mcp_servers.archcore]
+command = "archcore"
+args = ["mcp"]

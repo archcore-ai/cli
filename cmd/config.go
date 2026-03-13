@@ -30,21 +30,11 @@ func runConfig(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		fmt.Println(display.FailLine("Settings not found or invalid"))
 		fmt.Println(display.HintLine("Run 'archcore init' to set up"))
-		return nil
+		return fmt.Errorf("settings not found: %w", err)
 	}
 
 	if len(args) == 0 {
 		fmt.Println(display.KeyValue("sync", settings.Sync))
-		if settings.Sync != config.SyncTypeNone {
-			pidStr := "null"
-			if settings.ProjectID != nil {
-				pidStr = strconv.Itoa(*settings.ProjectID)
-			}
-			fmt.Println(display.KeyValue("project_id", pidStr))
-		}
-		if settings.Sync == config.SyncTypeOnPrem {
-			fmt.Println(display.KeyValue("archcore_url", settings.ArchcoreURL))
-		}
 		return nil
 	}
 
@@ -52,6 +42,10 @@ func runConfig(cmd *cobra.Command, args []string) error {
 	case "get":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: archcore config get <key>")
+		}
+		// "get sync" is allowed (read-only, safe to expose); "set sync" is blocked below.
+		if args[1] == "project_id" || args[1] == "archcore_url" {
+			return fmt.Errorf("%s is not available yet — sync features are coming soon", args[1])
 		}
 		val, err := getSettingsValue(settings, args[1])
 		if err != nil {
@@ -63,13 +57,16 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		if len(args) < 3 {
 			return fmt.Errorf("usage: archcore config set <key> <value>")
 		}
+		if args[1] == "sync" || args[1] == "project_id" || args[1] == "archcore_url" {
+			return fmt.Errorf("%s is not available yet — sync features are coming soon", args[1])
+		}
 		if err := setSettingsValue(settings, args[1], strings.Join(args[2:], " ")); err != nil {
 			return err
 		}
 		if err := config.Save(cwd, settings); err != nil {
 			return fmt.Errorf("saving settings: %w", err)
 		}
-		fmt.Println(display.CheckLine(fmt.Sprintf("Set %s = %s", args[1], args[2])))
+		fmt.Println(display.CheckLine(fmt.Sprintf("Set %s = %s", args[1], strings.Join(args[2:], " "))))
 
 	default:
 		return fmt.Errorf("unknown subcommand %q — use 'get' or 'set'", args[0])
@@ -95,8 +92,13 @@ func getSettingsValue(s *config.Settings, key string) (string, error) {
 			return "", fmt.Errorf("archcore_url is only available for sync type %q", config.SyncTypeOnPrem)
 		}
 		return s.ArchcoreURL, nil
+	case "language":
+		if s.Language == "" {
+			return "en", nil
+		}
+		return s.Language, nil
 	default:
-		return "", fmt.Errorf("unknown config key %q — valid keys: sync, project_id, archcore_url", key)
+		return "", fmt.Errorf("unknown config key %q — valid keys: sync, project_id, archcore_url, language", key)
 	}
 }
 
@@ -113,7 +115,7 @@ func setSettingsValue(s *config.Settings, key, value string) error {
 			s.ArchcoreURL = ""
 		case config.SyncTypeOnPrem:
 			if s.ArchcoreURL == "" {
-				return fmt.Errorf("cannot switch to %q without archcore_url — use 'archcore init' instead", config.SyncTypeOnPrem)
+				return fmt.Errorf("cannot switch to %q without archcore_url — run 'archcore config set archcore_url <url>' instead", config.SyncTypeOnPrem)
 			}
 			s.Sync = value
 		default:
@@ -135,15 +137,21 @@ func setSettingsValue(s *config.Settings, key, value string) error {
 		}
 	case "archcore_url":
 		if s.Sync != config.SyncTypeOnPrem {
-			return fmt.Errorf("archcore_url can only be set when sync is %q", config.SyncTypeOnPrem)
+			// Setting archcore_url implies on-prem sync mode.
+			s.Sync = config.SyncTypeOnPrem
 		}
 		value = strings.TrimRight(value, "/")
 		if value == "" {
 			return fmt.Errorf("archcore_url must not be empty")
 		}
 		s.ArchcoreURL = value
+	case "language":
+		if value == "" {
+			return fmt.Errorf("language must not be empty")
+		}
+		s.Language = value
 	default:
-		return fmt.Errorf("unknown config key %q — valid keys: sync, project_id, archcore_url", key)
+		return fmt.Errorf("unknown config key %q — valid keys: sync, project_id, archcore_url, language", key)
 	}
 	return nil
 }

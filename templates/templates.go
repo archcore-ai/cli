@@ -1,6 +1,12 @@
 package templates
 
-import "slices"
+import (
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
 
 type DocumentType string
 
@@ -10,7 +16,6 @@ const (
 	TypeRule     DocumentType = "rule"
 	TypeGuide    DocumentType = "guide"
 	TypeDoc      DocumentType = "doc"
-	TypeProject  DocumentType = "project"
 	TypeTaskType DocumentType = "task-type"
 	TypeCPAT     DocumentType = "cpat"
 	TypePRD      DocumentType = "prd"
@@ -24,16 +29,43 @@ const (
 	CategoryExperience = "experience"
 )
 
+const (
+	StatusDraft    = "draft"
+	StatusAccepted = "accepted"
+	StatusRejected = "rejected"
+)
+
+// SkipFiles are non-document meta files that live in .archcore/ and should be
+// skipped during scanning, validation, and sync operations.
+var SkipFiles = map[string]bool{
+	"settings.json":    true,
+	".sync-state.json": true,
+}
+
+// ValidStatuses returns all valid document status strings.
+func ValidStatuses() []string {
+	return []string{StatusDraft, StatusAccepted, StatusRejected}
+}
+
+// IsValidStatus checks whether the given string is a valid document status.
+func IsValidStatus(s string) bool {
+	switch s {
+	case StatusDraft, StatusAccepted, StatusRejected:
+		return true
+	}
+	return false
+}
+
 var categoryMap = map[DocumentType]string{
 	TypePRD:  CategoryVision,
 	TypeIdea: CategoryVision,
 	TypePlan: CategoryVision,
 
-	TypeADR:   CategoryKnowledge,
-	TypeRFC:   CategoryKnowledge,
-	TypeRule:  CategoryKnowledge,
-	TypeGuide: CategoryKnowledge,
-	TypeDoc:   CategoryKnowledge,
+	TypeADR:     CategoryKnowledge,
+	TypeRFC:     CategoryKnowledge,
+	TypeRule:    CategoryKnowledge,
+	TypeGuide:   CategoryKnowledge,
+	TypeDoc: CategoryKnowledge,
 
 	TypeTaskType: CategoryExperience,
 	TypeCPAT:     CategoryExperience,
@@ -74,7 +106,96 @@ func TypesByCategory() map[string][]string {
 
 // IsValidType checks whether the given string is a valid document type.
 func IsValidType(t string) bool {
-	return slices.Contains(ValidTypes(), t)
+	_, ok := categoryMap[DocumentType(t)]
+	return ok
+}
+
+// ExtractDocType extracts the type from a filename like "use-postgres.adr.md".
+func ExtractDocType(filename string) string {
+	name := strings.TrimSuffix(filename, ".md")
+	parts := strings.Split(name, ".")
+	if len(parts) >= 2 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
+// ExtractSlug extracts the slug from a filename like "use-postgres.adr.md".
+func ExtractSlug(filename string) string {
+	name := strings.TrimSuffix(filename, ".md")
+	parts := strings.Split(name, ".")
+	if len(parts) >= 2 {
+		return strings.Join(parts[:len(parts)-1], ".")
+	}
+	return name
+}
+
+// SplitDocument splits raw document bytes into frontmatter fields and body.
+// It returns the title, status, and the markdown body after the closing "---".
+func SplitDocument(data []byte) (title, status, body string) {
+	s := strings.ReplaceAll(string(data), "\r\n", "\n")
+	if !strings.HasPrefix(s, "---\n") {
+		return "", "", s
+	}
+
+	end := strings.Index(s[4:], "\n---\n")
+	if end == -1 {
+		return "", "", s
+	}
+	end += 4 // adjust for the offset
+
+	frontmatter := s[4:end]
+	for _, line := range strings.Split(frontmatter, "\n") {
+		if strings.HasPrefix(line, "title: ") {
+			title = strings.TrimPrefix(line, "title: ")
+			// Remove surrounding quotes added by buildDocumentFile (%q).
+			if len(title) >= 2 && title[0] == '"' && title[len(title)-1] == '"' {
+				if unq, err := strconv.Unquote(title); err == nil {
+					title = unq
+				}
+			}
+		}
+		if strings.HasPrefix(line, "status: ") {
+			status = strings.TrimPrefix(line, "status: ")
+		}
+	}
+
+	body = s[end+5:] // skip past "\n---\n"
+	body = strings.TrimPrefix(body, "\n")
+
+	return title, status, body
+}
+
+// WalkArchcoreFiles walks archcoreDir recursively, calling fn for each .md
+// document file found. It skips hidden directories, non-.md files, and known
+// meta files (settings.json, .sync-state.json).
+func WalkArchcoreFiles(archcoreDir string, fn func(path string, d fs.DirEntry) error) error {
+	return filepath.WalkDir(archcoreDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+
+		name := d.Name()
+
+		// Skip hidden directories (but not .archcore itself).
+		if d.IsDir() && strings.HasPrefix(name, ".") && path != archcoreDir {
+			return filepath.SkipDir
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		// Skip non-.md files and known meta files.
+		if !strings.HasSuffix(name, ".md") || SkipFiles[name] {
+			return nil
+		}
+
+		return fn(path, d)
+	})
 }
 
 func GenerateTemplate(documentType DocumentType) string {
@@ -89,8 +210,6 @@ func GenerateTemplate(documentType DocumentType) string {
 		return generateGuideTemplate()
 	case TypeDoc:
 		return generateDocTemplate()
-	case TypeProject:
-		return generateProjectTemplate()
 	case TypeTaskType:
 		return generateTaskTypeTemplate()
 	case TypeCPAT:
@@ -312,11 +431,55 @@ How to rollback if issues are discovered.
 }
 
 func generateRuleTemplate() string {
-	return `[Context when these rules apply]
+	return `## Description
+
+Brief description of what this rule covers and why it exists.
+
+## Rule
+
+State the rule clearly as imperative statements:
 
 1. [Rule as imperative statement]
 2. [Rule as imperative statement]
 3. [Rule as imperative statement]
+
+## Rationale
+
+Why this rule exists and what problems it prevents.
+
+## Examples
+
+### Good
+
+` + "```" + `
+// Example of correct usage
+` + "```" + `
+
+` + "```" + `
+// Another example of correct usage
+` + "```" + `
+
+### Bad
+
+` + "```" + `
+// Example of incorrect usage
+` + "```" + `
+
+` + "```" + `
+// Another example of incorrect usage
+` + "```" + `
+
+## Exceptions
+
+- Exception 1: When this rule does not apply
+- Exception 2: When this rule does not apply
+
+## Enforcement
+
+How this rule is enforced:
+
+- Enforcement method 1: Description
+- Enforcement method 2: Description
 
 ## References
 
@@ -525,140 +688,6 @@ Answer to the question.
 - Link to related documentation
 - Link to API reference
 - Link to tutorials
-`
-}
-
-func generateProjectTemplate() string {
-	return `## Overview
-
-Brief description of the project and its purpose.
-
-### Status
-
-Current project status: [Active/Maintenance/Deprecated]
-
-### Key Metrics
-
-- Metric 1: Value
-- Metric 2: Value
-
-## Purpose
-
-### Problem Statement
-
-What problem does this project solve?
-
-### Goals
-
-- Goal 1: Description
-- Goal 2: Description
-- Goal 3: Description
-
-### Non-Goals
-
-- What this project explicitly does not do
-
-## Architecture
-
-### High-Level Overview
-
-Description of the overall architecture.
-
-### Components
-
-| Component | Purpose | Technology |
-|-----------|---------|------------|
-| Component 1 | Description | Tech stack |
-| Component 2 | Description | Tech stack |
-| Component 3 | Description | Tech stack |
-
-### Data Flow
-
-Description of how data flows through the system.
-
-### Dependencies
-
-External dependencies:
-
-- Dependency 1: Version, purpose
-- Dependency 2: Version, purpose
-
-Internal dependencies:
-
-- Dependency 1: Purpose
-- Dependency 2: Purpose
-
-## Getting Started
-
-### Prerequisites
-
-- Prerequisite 1
-- Prerequisite 2
-
-### Installation
-
-` + "```" + `
-# Installation commands
-` + "```" + `
-
-### Configuration
-
-Key configuration options:
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| OPTION_1 | Description | value |
-| OPTION_2 | Description | value |
-
-### Running Locally
-
-` + "```" + `
-# Commands to run locally
-` + "```" + `
-
-## Key Components
-
-### Component 1: [Name]
-
-- Purpose: Description
-- Location: Path or module
-- Key files: List of important files
-
-### Component 2: [Name]
-
-- Purpose: Description
-- Location: Path or module
-- Key files: List of important files
-
-### Component 3: [Name]
-
-- Purpose: Description
-- Location: Path or module
-- Key files: List of important files
-
-## Development
-
-### Development Workflow
-
-1. Step 1
-2. Step 2
-3. Step 3
-
-### Testing
-
-` + "```" + `
-# Commands to run tests
-` + "```" + `
-
-### Deployment
-
-Deployment process and environments.
-
-## Related Resources
-
-- Link to API documentation
-- Link to design documents
-- Link to runbooks
 `
 }
 

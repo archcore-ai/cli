@@ -1,23 +1,107 @@
 package cmd
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
+	"archcore-cli/internal/display"
+
 	"github.com/spf13/cobra"
 )
 
-func NewRootCmd() *cobra.Command {
+var pseudoVersionSuffix = regexp.MustCompile(`\.0\.\d{14}-[0-9a-f]+$`)
+
+func cleanVersion(v string) string {
+	if i := strings.Index(v, "+"); i != -1 {
+		v = v[:i]
+	}
+	v = pseudoVersionSuffix.ReplaceAllString(v, "")
+	if !strings.HasPrefix(v, "v") {
+		v = "v" + v
+	}
+	return v
+}
+
+// FormatExecuteError returns styled output for known cobra errors
+// (unknown command, unknown flag). Returns empty string for unrecognized errors.
+func FormatExecuteError(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+
+	var b strings.Builder
+
+	switch {
+	case strings.HasPrefix(msg, "unknown command"):
+		lines := strings.SplitN(msg, "\n", 2)
+		b.WriteString(display.FailLine(lines[0]))
+		if len(lines) > 1 {
+			// Preserve cobra's "Did you mean this?" suggestion lines
+			for line := range strings.SplitSeq(lines[1], "\n") {
+				trimmed := strings.TrimSpace(line)
+				if trimmed != "" {
+					b.WriteString("\n")
+					b.WriteString(display.HintLine(trimmed))
+				}
+			}
+		}
+		b.WriteString("\n")
+		b.WriteString(display.HintLine("Run 'archcore --help' to see available commands"))
+		return b.String()
+
+	case strings.HasPrefix(msg, "unknown flag"), strings.HasPrefix(msg, "unknown shorthand flag"):
+		b.WriteString(display.FailLine(msg))
+		b.WriteString("\n")
+		b.WriteString(display.HintLine("Run 'archcore --help' to see available options"))
+		return b.String()
+
+	default:
+		return ""
+	}
+}
+
+func NewRootCmd(version string) *cobra.Command {
+	cleaned := cleanVersion(version)
 	root := &cobra.Command{
 		Use:           "archcore",
-		Short:         "Archcore CLI — context engineering platform",
+		Short:         "Archcore — System Context Platform",
+		Version:       cleaned,
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintln(cmd.OutOrStdout(), display.WelcomeBanner())
+			fmt.Fprintln(cmd.OutOrStdout())
+			_ = cmd.Usage()
+		},
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd: true,
+		},
 	}
+
+	root.SetVersionTemplate("{{.Version}}\n")
+
+	defaultHelp := root.HelpFunc()
+	root.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		if cmd == root {
+			fmt.Fprintln(cmd.OutOrStdout(), display.WelcomeBanner())
+			fmt.Fprintln(cmd.OutOrStdout())
+			_ = cmd.Usage()
+			return
+		}
+		defaultHelp(cmd, args)
+	})
 
 	root.AddCommand(
 		newInitCmd(),
-		newCreateCmd(),
-		newStatusCmd(),
 		newConfigCmd(),
 		newDoctorCmd(),
+		newValidateCmd(),
+		newHooksCmd(),
+		newMCPCmd(),
+		newSyncCmd(),
+		newUpdateCmd(cleaned),
 	)
 
 	return root

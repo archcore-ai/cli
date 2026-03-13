@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	// "strings" // re-enable with sync type selector
 
+	"archcore-cli/internal/agents"
 	"archcore-cli/internal/api"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
@@ -27,16 +28,16 @@ func runInit(ctx context.Context, baseDir string, settings *config.Settings) (*i
 
 	result := &initResult{}
 
+	if err := config.Save(baseDir, settings); err != nil {
+		return nil, fmt.Errorf("saving settings: %w", err)
+	}
+
 	if serverURL := settings.ServerURL(); serverURL != "" {
 		client := api.NewClient(serverURL)
 		if err := client.CheckHealth(ctx); err != nil {
 			return result, fmt.Errorf("cannot reach server at %s: %w", serverURL, err)
 		}
 		result.serverReachable = true
-	}
-
-	if err := config.Save(baseDir, settings); err != nil {
-		return nil, fmt.Errorf("saving settings: %w", err)
 	}
 
 	return result, nil
@@ -72,38 +73,43 @@ func newInitCmd() *cobra.Command {
 				}
 			}
 
-			var syncType string
-			err = huh.NewSelect[string]().
-				Title("Select sync option").
-				Options(
-					huh.NewOption("No sync", config.SyncTypeNone),
-					huh.NewOption("Archcore Cloud", config.SyncTypeCloud),
-					huh.NewOption("Archcore On-Prem", config.SyncTypeOnPrem),
-				).
-				Value(&syncType).
-				Run()
-			if err != nil {
-				return err
-			}
+			// Sync is temporarily disabled — always use "none".
+			// To re-enable, uncomment the block below and remove the hardcoded line.
+			settings := config.NewNoneSettings()
 
-			var settings *config.Settings
-			switch syncType {
-			case config.SyncTypeNone:
-				settings = config.NewNoneSettings()
-			case config.SyncTypeCloud:
-				settings = config.NewCloudSettings()
-			case config.SyncTypeOnPrem:
-				serverURL := "http://localhost:8080"
-				err = huh.NewInput().
-					Title("Archcore URL").
-					Value(&serverURL).
-					Run()
-				if err != nil {
-					return err
-				}
-				serverURL = strings.TrimRight(serverURL, "/")
-				settings = config.NewOnPremSettings(serverURL)
-			}
+			// var syncType string
+			// err = huh.NewSelect[string]().
+			// 	Title("Select sync option").
+			// 	Options(
+			// 		huh.NewOption("No sync - store artifacts locally without remote synchronization", config.SyncTypeNone),
+			// 		huh.NewOption("Archcore On-Prem - sync with central context platform. Boost your MCP with smart Archcore GraphRAG", config.SyncTypeOnPrem),
+			// 	).
+			// 	Value(&syncType).
+			// 	Run()
+			// if err != nil {
+			// 	return err
+			// }
+			//
+			// var settings *config.Settings
+			// switch syncType {
+			// case config.SyncTypeNone:
+			// 	settings = config.NewNoneSettings()
+			// case config.SyncTypeCloud:
+			// 	settings = config.NewCloudSettings()
+			// case config.SyncTypeOnPrem:
+			// 	serverURL := "http://localhost:8080"
+			// 	err = huh.NewInput().
+			// 		Title("Archcore URL").
+			// 		Value(&serverURL).
+			// 		Run()
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// 	serverURL = strings.TrimRight(serverURL, "/")
+			// 	settings = config.NewOnPremSettings(serverURL)
+			// default:
+			// 	return fmt.Errorf("unsupported sync type: %q", syncType)
+			// }
 
 			result, err := runInit(ctx, cwd, settings)
 			if err != nil && result != nil {
@@ -120,6 +126,21 @@ func newInitCmd() *cobra.Command {
 				fmt.Println(display.CheckLine("Server is reachable"))
 			}
 			fmt.Println(display.CheckLine("Settings saved to .archcore/settings.json"))
+
+			// Auto-detect agents and install hooks + MCP config for all found.
+			detected := agents.Detect(cwd)
+			if len(detected) == 0 {
+				detected = []*agents.Agent{agents.ByID(agents.ClaudeCode)}
+			}
+			for _, agent := range detected {
+				if err := installHooksForAgent(cwd, agent); err != nil {
+					fmt.Println(display.WarnLine(fmt.Sprintf("%s hooks: %v", agent.DisplayName, err)))
+				}
+				if err := installMCPForAgent(cwd, agent); err != nil {
+					fmt.Println(display.WarnLine(fmt.Sprintf("%s MCP: %v", agent.DisplayName, err)))
+				}
+			}
+
 			fmt.Println()
 			fmt.Println(display.Success.Render("  Ready! Run 'archcore status' to verify."))
 			return nil

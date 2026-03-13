@@ -12,16 +12,13 @@ func TestInitDir(t *testing.T) {
 	if err := InitDir(base); err != nil {
 		t.Fatalf("InitDir: %v", err)
 	}
-	for _, sub := range subdirs {
-		p := filepath.Join(base, dirName, sub)
-		info, err := os.Stat(p)
-		if err != nil {
-			t.Errorf("subdir %q not created: %v", sub, err)
-			continue
-		}
-		if !info.IsDir() {
-			t.Errorf("subdir %q is not a directory", sub)
-		}
+	p := filepath.Join(base, dirName)
+	info, err := os.Stat(p)
+	if err != nil {
+		t.Fatalf(".archcore/ not created: %v", err)
+	}
+	if !info.IsDir() {
+		t.Fatal(".archcore/ is not a directory")
 	}
 }
 
@@ -146,6 +143,10 @@ func TestValidate(t *testing.T) {
 		{"cloud valid with pid", Settings{Sync: SyncTypeCloud, ProjectID: &pid}, false},
 		{"on-prem valid", Settings{Sync: SyncTypeOnPrem, ArchcoreURL: "http://x:8080"}, false},
 		{"on-prem valid with pid", Settings{Sync: SyncTypeOnPrem, ProjectID: &pid, ArchcoreURL: "http://x:8080"}, false},
+		{"none with language", Settings{Sync: SyncTypeNone, Language: "ru"}, false},
+		{"cloud with language", Settings{Sync: SyncTypeCloud, Language: "ja"}, false},
+		{"on-prem with language", Settings{Sync: SyncTypeOnPrem, ArchcoreURL: "http://x:8080", Language: "de"}, false},
+		{"language with spaces", Settings{Sync: SyncTypeNone, Language: "en US"}, true},
 		{"none with pid", Settings{Sync: SyncTypeNone, ProjectID: &pid}, true},
 		{"none with url", Settings{Sync: SyncTypeNone, ArchcoreURL: "http://x"}, true},
 		{"cloud with url", Settings{Sync: SyncTypeCloud, ArchcoreURL: "http://x"}, true},
@@ -180,7 +181,7 @@ func TestMarshalJSON(t *testing.T) {
 		{
 			"cloud nil pid",
 			Settings{Sync: SyncTypeCloud},
-			`{"sync":"cloud","project_id":null}`,
+			`{"sync":"cloud"}`,
 		},
 		{
 			"cloud with pid",
@@ -190,12 +191,27 @@ func TestMarshalJSON(t *testing.T) {
 		{
 			"on-prem nil pid",
 			Settings{Sync: SyncTypeOnPrem, ArchcoreURL: "http://x:8080"},
-			`{"sync":"on-prem","project_id":null,"archcore_url":"http://x:8080"}`,
+			`{"sync":"on-prem","archcore_url":"http://x:8080"}`,
 		},
 		{
 			"on-prem with pid",
 			Settings{Sync: SyncTypeOnPrem, ProjectID: &pid, ArchcoreURL: "http://x:8080"},
 			`{"sync":"on-prem","project_id":42,"archcore_url":"http://x:8080"}`,
+		},
+		{
+			"none with language",
+			Settings{Sync: SyncTypeNone, Language: "ru"},
+			`{"sync":"none","language":"ru"}`,
+		},
+		{
+			"cloud with language",
+			Settings{Sync: SyncTypeCloud, Language: "ja"},
+			`{"sync":"cloud","language":"ja"}`,
+		},
+		{
+			"on-prem with language",
+			Settings{Sync: SyncTypeOnPrem, ArchcoreURL: "http://x:8080", Language: "de"},
+			`{"sync":"on-prem","archcore_url":"http://x:8080","language":"de"}`,
 		},
 	}
 	for _, tt := range tests {
@@ -229,31 +245,52 @@ func TestUnmarshalJSON_Valid(t *testing.T) {
 		wantSync  string
 		wantPID   *int
 		wantURL   string
+		wantLang  string
 	}{
 		{
 			"none",
 			`{"sync":"none"}`,
-			SyncTypeNone, nil, "",
+			SyncTypeNone, nil, "", "",
+		},
+		{
+			"cloud no pid",
+			`{"sync":"cloud"}`,
+			SyncTypeCloud, nil, "", "",
 		},
 		{
 			"cloud null pid",
 			`{"sync":"cloud","project_id":null}`,
-			SyncTypeCloud, nil, "",
+			SyncTypeCloud, nil, "", "",
 		},
 		{
 			"cloud with pid",
 			`{"sync":"cloud","project_id":42}`,
-			SyncTypeCloud, &pid, "",
+			SyncTypeCloud, &pid, "", "",
+		},
+		{
+			"on-prem no pid",
+			`{"sync":"on-prem","archcore_url":"http://x:8080"}`,
+			SyncTypeOnPrem, nil, "http://x:8080", "",
 		},
 		{
 			"on-prem null pid",
 			`{"sync":"on-prem","project_id":null,"archcore_url":"http://x:8080"}`,
-			SyncTypeOnPrem, nil, "http://x:8080",
+			SyncTypeOnPrem, nil, "http://x:8080", "",
 		},
 		{
 			"on-prem with pid",
 			`{"sync":"on-prem","project_id":42,"archcore_url":"http://x:8080"}`,
-			SyncTypeOnPrem, &pid, "http://x:8080",
+			SyncTypeOnPrem, &pid, "http://x:8080", "",
+		},
+		{
+			"none with language",
+			`{"sync":"none","language":"ru"}`,
+			SyncTypeNone, nil, "", "ru",
+		},
+		{
+			"cloud with language",
+			`{"sync":"cloud","language":"ja"}`,
+			SyncTypeCloud, nil, "", "ja",
 		},
 	}
 	for _, tt := range tests {
@@ -273,6 +310,9 @@ func TestUnmarshalJSON_Valid(t *testing.T) {
 			if s.ArchcoreURL != tt.wantURL {
 				t.Errorf("ArchcoreURL = %q, want %q", s.ArchcoreURL, tt.wantURL)
 			}
+			if s.Language != tt.wantLang {
+				t.Errorf("Language = %q, want %q", s.Language, tt.wantLang)
+			}
 		})
 	}
 }
@@ -285,8 +325,6 @@ func TestUnmarshalJSON_Rejection(t *testing.T) {
 		{"none with project_id", `{"sync":"none","project_id":null}`},
 		{"none with archcore_url", `{"sync":"none","archcore_url":"http://x"}`},
 		{"cloud with archcore_url", `{"sync":"cloud","project_id":null,"archcore_url":"http://x"}`},
-		{"cloud missing project_id", `{"sync":"cloud"}`},
-		{"on-prem missing project_id", `{"sync":"on-prem","archcore_url":"http://x"}`},
 		{"on-prem missing archcore_url", `{"sync":"on-prem","project_id":null}`},
 		{"on-prem empty archcore_url", `{"sync":"on-prem","project_id":null,"archcore_url":""}`},
 		{"unknown sync type", `{"sync":"magic"}`},
@@ -294,6 +332,9 @@ func TestUnmarshalJSON_Rejection(t *testing.T) {
 		{"unknown field", `{"sync":"none","extra":true}`},
 		{"invalid JSON", `{invalid`},
 		{"project_id as string", `{"sync":"cloud","project_id":"42"}`},
+		{"language empty", `{"sync":"none","language":""}`},
+		{"language with spaces", `{"sync":"none","language":"en US"}`},
+		{"language as number", `{"sync":"none","language":42}`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -318,6 +359,8 @@ func TestRoundtrip(t *testing.T) {
 		{"cloud with pid", Settings{Sync: SyncTypeCloud, ProjectID: &pid}},
 		{"on-prem nil pid", Settings{Sync: SyncTypeOnPrem, ArchcoreURL: "http://x:8080"}},
 		{"on-prem with pid", Settings{Sync: SyncTypeOnPrem, ProjectID: &pid, ArchcoreURL: "http://x:8080"}},
+		{"none with language", Settings{Sync: SyncTypeNone, Language: "ru"}},
+		{"cloud with language", Settings{Sync: SyncTypeCloud, Language: "ja"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -339,6 +382,9 @@ func TestRoundtrip(t *testing.T) {
 			}
 			if got.ArchcoreURL != tt.s.ArchcoreURL {
 				t.Errorf("ArchcoreURL = %q, want %q", got.ArchcoreURL, tt.s.ArchcoreURL)
+			}
+			if got.Language != tt.s.Language {
+				t.Errorf("Language = %q, want %q", got.Language, tt.s.Language)
 			}
 		})
 	}

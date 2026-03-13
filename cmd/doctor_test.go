@@ -20,7 +20,7 @@ func runDoctorInDir(t *testing.T, dir string) string {
 		t.Fatalf("Chdir: %v", err)
 	}
 
-	root := NewRootCmd()
+	root := NewRootCmd("test")
 	buf := &bytes.Buffer{}
 	root.SetOut(buf)
 	root.SetErr(buf)
@@ -33,6 +33,7 @@ func runDoctorInDir(t *testing.T, dir string) string {
 	}
 	oldStdout := os.Stdout
 	os.Stdout = w
+	defer func() { os.Stdout = oldStdout }()
 
 	execErr := root.Execute()
 	w.Close()
@@ -40,9 +41,8 @@ func runDoctorInDir(t *testing.T, dir string) string {
 
 	var out bytes.Buffer
 	out.ReadFrom(r)
-	err = execErr
 
-	if err != nil {
+	if execErr != nil {
 		t.Fatalf("doctor command failed: %v", err)
 	}
 	return out.String()
@@ -56,7 +56,7 @@ func TestDoctor_NotInitialized(t *testing.T) {
 	}
 }
 
-func TestDoctor_MissingSubdir(t *testing.T) {
+func TestDoctor_FreeFormDirectoryAllowed(t *testing.T) {
 	dir := t.TempDir()
 	if err := config.InitDir(dir); err != nil {
 		t.Fatal(err)
@@ -64,15 +64,12 @@ func TestDoctor_MissingSubdir(t *testing.T) {
 	if err := config.Save(dir, config.NewNoneSettings()); err != nil {
 		t.Fatal(err)
 	}
-	// Remove one subdir.
-	os.RemoveAll(filepath.Join(dir, ".archcore", "vision"))
+	// Custom directories are fine — no required subdirs.
+	os.MkdirAll(filepath.Join(dir, ".archcore", "auth"), 0o755)
 
 	out := runDoctorInDir(t, dir)
-	if !strings.Contains(out, "vision") || !strings.Contains(out, "missing") {
-		t.Errorf("expected 'vision' and 'missing' in output, got: %s", out)
-	}
-	if !strings.Contains(out, "issue") {
-		t.Errorf("expected 'issue' in output, got: %s", out)
+	if !strings.Contains(out, "All checks passed") {
+		t.Errorf("expected 'All checks passed', got: %s", out)
 	}
 }
 
@@ -153,6 +150,28 @@ func TestDoctor_SyncOnPrem_Unreachable(t *testing.T) {
 	out := runDoctorInDir(t, dir)
 	if !strings.Contains(out, "unreachable") {
 		t.Errorf("expected 'unreachable' in output, got: %s", out)
+	}
+	if !strings.Contains(out, "issue") {
+		t.Errorf("expected 'issue' in output, got: %s", out)
+	}
+}
+
+func TestDoctor_WithInvalidDocuments(t *testing.T) {
+	dir := t.TempDir()
+	if err := config.InitDir(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := config.Save(dir, config.NewNoneSettings()); err != nil {
+		t.Fatal(err)
+	}
+	// Write a doc with bad naming (no type segment).
+	d := filepath.Join(dir, ".archcore", "knowledge")
+	os.MkdirAll(d, 0o755)
+	os.WriteFile(filepath.Join(d, "readme.md"), []byte("---\ntitle: T\nstatus: draft\n---\n"), 0o644)
+
+	out := runDoctorInDir(t, dir)
+	if strings.Contains(out, "All checks passed") {
+		t.Errorf("expected issues, but got 'All checks passed': %s", out)
 	}
 	if !strings.Contains(out, "issue") {
 		t.Errorf("expected 'issue' in output, got: %s", out)
