@@ -22,6 +22,7 @@ Archcore fixes this. It creates a `.archcore/` directory in your repository — 
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [How It Works](#how-it-works)
+- [Try It](#try-it)
 - [Commands](#commands)
 - [AI Agent Integration](#ai-agent-integration)
 - [Configuration](#configuration)
@@ -88,6 +89,34 @@ go build -o archcore .
 The directory structure is **free-form** — organize documents by domain, feature, team, or any structure that fits your project. Categories are virtual, derived from the document type in the filename (`slug.type.md`).
 
 *Archcore CLI is best example for how it works: https://github.com/archcore-ai/cli/tree/main/.archcore*
+
+## Try It
+
+After `archcore init`, open your AI agent and start talking. The agent already knows your existing documents and has tools to create new ones.
+
+> "We decided to use PostgreSQL instead of MongoDB for our primary database. Record this decision."
+
+Creates `infrastructure/use-postgres.adr.md` — Context, Decision, Alternatives Considered, and Consequences filled from your conversation.
+
+> "We have a team convention: always wrap errors with context using fmt.Errorf and %w. Make this a rule."
+
+Creates `backend/error-wrapping.rule.md` with imperative statements, rationale, and good/bad code examples.
+
+> "Last week we had a connection pool exhaustion incident because idle connections weren't being recycled. Document this so we don't repeat it."
+
+Creates `incidents/connection-pool-exhaustion.cpat.md` — root cause analysis and prevention steps.
+
+> "I need a PRD for the user notifications feature — push, email digests, and in-app alerts."
+
+Creates `notifications/user-notifications.prd.md` with goals, user stories, requirements, and success metrics.
+
+> "Create an implementation plan for the notifications PRD and link them together."
+
+Creates `notifications/notifications-implementation.plan.md` with phased tasks, then links it to the PRD with an `implements` relation.
+
+> "Quick idea: what if we added a GraphQL API alongside REST?"
+
+Creates `api/graphql-support.idea.md` — lightweight capture with value assessment and possible implementation.
 
 ### Document Types
 
