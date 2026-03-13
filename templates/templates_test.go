@@ -46,13 +46,13 @@ func TestGenerateTemplate(t *testing.T) {
 			name:         "Task-Type template",
 			documentType: TypeTaskType,
 			wantEmpty:    false,
-			wantContains: []string{"## Description", "## When to Use", "## Fields", "## Workflow", "## Examples"},
+			wantContains: []string{"## What", "## When to Use", "## Steps", "## Example", "## Things to Watch Out For"},
 		},
 		{
 			name:         "CPAT template",
 			documentType: TypeCPAT,
 			wantEmpty:    false,
-			wantContains: []string{"## Overview", "## Context", "## Problem", "## Action", "## Timeline"},
+			wantContains: []string{"## What Changed", "## Why", "## Before", "## After", "## Scope"},
 		},
 		{
 			name:         "PRD template",
@@ -235,13 +235,11 @@ func TestGenerateTaskTypeTemplate(t *testing.T) {
 	template := generateTaskTypeTemplate()
 
 	requiredSections := []string{
-		"## Description",
+		"## What",
 		"## When to Use",
-		"## Fields",
-		"## Workflow",
-		"## Examples",
-		"### Required Fields",
-		"### States",
+		"## Steps",
+		"## Example",
+		"## Things to Watch Out For",
 	}
 
 	for _, section := range requiredSections {
@@ -249,24 +247,18 @@ func TestGenerateTaskTypeTemplate(t *testing.T) {
 			t.Errorf("TaskType template missing section: %q", section)
 		}
 	}
-
-	if !strings.Contains(template, "|") {
-		t.Error("TaskType template should include tables")
-	}
 }
 
 func TestGenerateCPATTemplate(t *testing.T) {
 	template := generateCPATTemplate()
 
 	requiredSections := []string{
-		"## Overview",
-		"## Context",
-		"## Problem",
-		"## Action",
-		"## Timeline",
-		"### Root Cause",
-		"### Corrective Actions",
-		"### Preventive Actions",
+		"## What Changed",
+		"## Why",
+		"## Before",
+		"## After",
+		"## Scope",
+		"## Notes",
 	}
 
 	for _, section := range requiredSections {
@@ -275,8 +267,8 @@ func TestGenerateCPATTemplate(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(template, "|") {
-		t.Error("CPAT template should include tables")
+	if !strings.Contains(template, "```") {
+		t.Error("CPAT template should include code blocks")
 	}
 }
 
@@ -349,12 +341,12 @@ func TestTemplateStructure(t *testing.T) {
 		{
 			name:         "TaskType has substantial content",
 			documentType: TypeTaskType,
-			minLength:    1000,
+			minLength:    500,
 		},
 		{
 			name:         "CPAT has substantial content",
 			documentType: TypeCPAT,
-			minLength:    1000,
+			minLength:    300,
 		},
 		{
 			name:         "PRD has substantial content",
@@ -415,7 +407,7 @@ func TestRuleTemplate_CodeBlocks(t *testing.T) {
 		t.Errorf("code block markers = %d, should be even", codeBlockCount)
 	}
 
-	if codeBlockCount < 8 { 
+	if codeBlockCount < 8 {
 		t.Errorf("code block markers = %d, should have at least 8 (4 blocks)", codeBlockCount)
 	}
 }
@@ -439,7 +431,7 @@ func TestGuideTemplate_CodeBlocks(t *testing.T) {
 
 	codeBlockCount := strings.Count(template, "```")
 
-	if codeBlockCount < 6 { 
+	if codeBlockCount < 6 {
 		t.Errorf("Guide template code blocks = %d, should have at least 6", codeBlockCount)
 	}
 }

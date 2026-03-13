@@ -159,6 +159,21 @@
       "source": "telemetry/telemetry-provider-selection.rfc.md",
       "target": "telemetry/posthog-telemetry-implementation.plan.md",
       "type": "related"
+    },
+    {
+      "source": "dir/categories-and-document-types.doc.md",
+      "target": "dir/archcore-directory-structure.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "dir/categories-and-document-types.doc.md",
+      "target": "dir/free-form-directory-rules.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "dir/categories-and-document-types.doc.md",
+      "target": "dir/free-form-directory-structure.adr.md",
+      "type": "related"
     }
   ]
 }

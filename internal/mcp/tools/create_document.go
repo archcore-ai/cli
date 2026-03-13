@@ -43,10 +43,10 @@ Document types and when to use each:
                 § required sections: Idea, Value, Possible Implementation, Risks and Constraints
   plan      — A concrete implementation plan with defined tasks
                 § required sections: Goal, Tasks (phased), Acceptance Criteria, Dependencies
-  task-type — A recurring workflow pattern or task checklist
-                § required sections: When to Use, Fields, Workflow, Examples
-  cpat      — A corrective/preventive action record tied to a bug or incident
-                § required sections: Classification, Problem, Root Cause, Action (Corrective/Preventive)
+  task-type — A proven pattern for a typical recurring implementation task
+                § required sections: What, When to Use, Steps, Example, Things to Watch Out For
+  cpat      — A code pattern change: documents how and why a convention or approach changed
+                § required sections: What Changed, Why, Before, After, Scope
 
 TYPE DISAMBIGUATION:
 - rule vs doc: rule prescribes behavior ("Always do X") with good/bad examples and enforcement. doc describes what exists (tables, registries, explanations). Descriptive content → doc.

@@ -22,7 +22,7 @@ Example structures:
 Document types and their virtual categories:
   knowledge: adr (decisions), rfc (proposals), rule (standards), guide (how-tos), doc (reference), project (project overview)
   vision:    prd (requirements), idea (concepts), plan (action plans)
-  experience: task-type (recurring workflows), cpat (corrective/preventive actions)
+  experience: task-type (typical task patterns), cpat (code pattern changes)
 
 DOCUMENT RELATIONS:
 Documents can be linked with directed relations stored in the sync manifest.
@@ -53,8 +53,8 @@ WHEN TO CREATE:
 - Step-by-step instructions for completing a task → guide
 - Reference information, registries, lookup tables, or general documentation → doc
 - A project overview with architecture, components, and getting-started info → project
-- A recurring task pattern or checklist is identified → task-type
-- A bug or incident is root-caused and needs prevention tracking → cpat
+- A proven workflow for a recurring implementation task is documented → task-type
+- A coding pattern, convention, or approach has deliberately changed → cpat
 - A product concept or technical idea needs capturing → idea
 - An implementation plan with tasks is formed → plan
 - Product requirements with goals, scope, and acceptance criteria → prd

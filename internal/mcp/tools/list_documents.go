@@ -26,7 +26,7 @@ Use the returned paths directly as input to get_document. Do not construct paths
 			mcp.WithStringItems(),
 		),
 		mcp.WithString("category",
-			mcp.Description(`Filter by virtual category (derived from document type, not directory). Use "knowledge" for decisions/standards/guides/docs/proposals, "vision" for requirements/ideas/plans, "experience" for workflows and corrective actions.`),
+			mcp.Description(`Filter by virtual category (derived from document type, not directory). Use "knowledge" for decisions/standards/guides/docs/proposals, "vision" for requirements/ideas/plans, "experience" for task patterns and code pattern changes.`),
 			mcp.Enum("vision", "knowledge", "experience"),
 		),
 		mcp.WithString("status",

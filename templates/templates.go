@@ -692,211 +692,73 @@ Answer to the question.
 }
 
 func generateTaskTypeTemplate() string {
-	return `## Description
+	return `## What
 
-Brief description of this task type and when it should be used.
-
-### Purpose
-
-Why this task type exists and what problems it solves.
+What this typical task covers and what the end result looks like.
 
 ## When to Use
 
-Use this task type when:
+Use when:
 
-- Condition 1: Description
-- Condition 2: Description
-- Condition 3: Description
+- Condition 1
+- Condition 2
 
-Do NOT use this task type when:
+Do NOT use when:
 
-- Condition 1: Use [alternative] instead
-- Condition 2: Use [alternative] instead
+- Condition: use [alternative] instead
 
-## Fields
+## Steps
 
-### Required Fields
+1. Step one — what to do and where (@path/to/file)
+2. Step two — what to do next
+3. Step three — final checks
 
-| Field | Type | Description | Validation |
-|-------|------|-------------|------------|
-| Field 1 | Type | Description | Rules |
-| Field 2 | Type | Description | Rules |
-| Field 3 | Type | Description | Rules |
+## Example
 
-### Optional Fields
+` + "```" + `
+// Small code snippet or @-reference to a real implementation
+` + "```" + `
 
-| Field | Type | Description | Default |
-|-------|------|-------------|---------|
-| Field 1 | Type | Description | Value |
-| Field 2 | Type | Description | Value |
+## Things to Watch Out For
 
-## Workflow
-
-### States
-
-| State | Description | Transitions |
-|-------|-------------|-------------|
-| Open | Initial state | In Progress |
-| In Progress | Being worked on | Review, Blocked |
-| Review | Awaiting review | Done, In Progress |
-| Blocked | Cannot proceed | In Progress |
-| Done | Completed | - |
-
-### State Diagram
-
-1. Open → In Progress
-2. In Progress → Review
-3. Review → Done (or back to In Progress)
-
-### Automation
-
-- Trigger 1: Action
-- Trigger 2: Action
-
-## Examples
-
-### Example 1: [Scenario]
-
-**Title:** Example task title
-
-**Description:** Example description
-
-**Fields:**
-- Field 1: Value
-- Field 2: Value
-
-### Example 2: [Scenario]
-
-**Title:** Example task title
-
-**Description:** Example description
-
-## Acceptance Criteria Template
-
-For tasks of this type, acceptance criteria should include:
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
-
-## Related Task Types
-
-- Task Type 1: When to use instead
-- Task Type 2: When to use in combination
+- Pitfall or gotcha 1
+- Edge case to keep in mind
+- Common mistake to avoid
 `
 }
 
 func generateCPATTemplate() string {
-	return `## Overview
+	return `## What Changed
 
-Brief description of this corrective/preventive action.
+The pattern, convention, or approach that changed.
 
-### Classification
+## Why
 
-- Type: [Corrective/Preventive/Both]
-- Severity: [Critical/High/Medium/Low]
-- Status: [Open/In Progress/Resolved/Verified]
+What problem the old way caused and why the change was needed.
 
-## Context
+## Before
 
-### Background
+` + "```" + `
+// Old pattern
+` + "```" + `
 
-Describe the background and context that led to this CPAT.
+## After
 
-### Discovery
+` + "```" + `
+// New pattern
+` + "```" + `
 
-How was this issue discovered?
+## Scope
 
-- Discovery method: [Audit/Incident/Review/Other]
-- Discovery date: YYYY-MM-DD
-- Discovered by: [Team/Role]
+Affected files and modules:
 
-## Problem
+- @path/to/affected/module
+- @path/to/another/file
 
-### Problem Statement
+## Notes
 
-Clear description of the problem or potential problem.
-
-### Impact
-
-What is the impact if not addressed?
-
-- Impact area 1: Description
-- Impact area 2: Description
-
-### Root Cause
-
-Root cause analysis:
-
-1. Primary cause: Description
-2. Contributing factor 1: Description
-3. Contributing factor 2: Description
-
-### Evidence
-
-Supporting evidence:
-
-- Evidence 1: Description or link
-- Evidence 2: Description or link
-
-## Action
-
-### Corrective Actions
-
-Immediate actions to address the problem:
-
-| Action | Owner | Due Date | Status |
-|--------|-------|----------|--------|
-| Action 1 | Name | Date | Status |
-| Action 2 | Name | Date | Status |
-| Action 3 | Name | Date | Status |
-
-### Preventive Actions
-
-Actions to prevent recurrence:
-
-| Action | Owner | Due Date | Status |
-|--------|-------|----------|--------|
-| Action 1 | Name | Date | Status |
-| Action 2 | Name | Date | Status |
-
-### Verification
-
-How will we verify the actions were effective?
-
-- Verification method 1: Description
-- Verification method 2: Description
-
-## Timeline
-
-| Milestone | Target Date | Actual Date | Notes |
-|-----------|-------------|-------------|-------|
-| Identified | Date | Date | |
-| Analysis Complete | Date | Date | |
-| Actions Started | Date | Date | |
-| Actions Complete | Date | Date | |
-| Verified | Date | Date | |
-
-## Stakeholders
-
-| Role | Name | Responsibility |
-|------|------|----------------|
-| Owner | Name | Overall accountability |
-| Assignee | Name | Implementation |
-| Reviewer | Name | Verification |
-
-## Lessons Learned
-
-Key takeaways:
-
-- Lesson 1: Description
-- Lesson 2: Description
-
-## References
-
-- Related incident: Link
-- Related documentation: Link
-- Similar CPATs: Link
+- Exceptions where the old pattern is still acceptable
+- Migration notes or timeline
 `
 }
 
