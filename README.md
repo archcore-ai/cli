@@ -33,7 +33,7 @@ Archcore fixes this. It creates a `.archcore/` directory in your repository — 
 
 ```bash
 # Install
-curl -fsSL https://archcore.ai/install.sh | sh
+curl -fsSL https://archcore.ai/install.sh | bash
 
 # Initialize in your project
 cd your-project
@@ -48,7 +48,7 @@ archcore doctor
 ### macOS / Linux
 
 ```bash
-curl -fsSL https://archcore.ai/install.sh | sh
+curl -fsSL https://archcore.ai/install.sh | bash
 ```
 
 ### Windows
@@ -65,7 +65,7 @@ Move-Item archcore.exe C:\Users\$env:USERNAME\.local\bin\
 Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install), then run inside it:
 
 ```bash
-curl -fsSL https://archcore.ai/install.sh | sh
+curl -fsSL https://archcore.ai/install.sh | bash
 ```
 
 ### Go Install
@@ -293,6 +293,7 @@ go test ./cmd/ -run TestConfigCmd
 
 ## Links & License
 
+- **Documentation:** [docs.archcore.ai](https://docs.archcore.ai)
 - **Website:** [archcore.ai](https://archcore.ai)
 - **Issues:** [github.com/archcore-ai/cli/issues](https://github.com/archcore-ai/cli/issues)
 - **License:** [Apache 2.0](LICENSE)

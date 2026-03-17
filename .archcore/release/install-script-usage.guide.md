@@ -10,6 +10,7 @@ status: accepted
 - `curl` — for downloading release artifacts
 - `tar` — for extracting the archive
 - `sha256sum` or `shasum` — for checksum verification (optional but recommended)
+- `bash` — the install script requires bash (not POSIX sh)
 - A GitHub release must exist with `archcore_<os>_<arch>.tar.gz` and `checksums.txt` assets
 
 ### Windows
@@ -19,7 +20,7 @@ status: accepted
 ### Windows (WSL)
 
 - [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) installed
-- Same prerequisites as macOS / Linux (curl, tar, sha256sum)
+- Same prerequisites as macOS / Linux (curl, tar, bash, sha256sum)
 
 ## Installation Methods
 
@@ -28,25 +29,25 @@ status: accepted
 1. **Basic install (latest version)**
 
    ```bash
-   curl -fsSL https://archcore.ai/install.sh | sh
+   curl -fsSL https://archcore.ai/install.sh | bash
    ```
 
 2. **Pin a specific version**
 
    ```bash
-   ARCHCORE_VERSION=v1.0.0 curl -fsSL https://archcore.ai/install.sh | sh
+   ARCHCORE_VERSION=v1.0.0 curl -fsSL https://archcore.ai/install.sh | bash
    ```
 
 3. **Custom install directory** (default: `~/.local/bin`)
 
    ```bash
-   ARCHCORE_INSTALL_DIR=/usr/local/bin curl -fsSL https://archcore.ai/install.sh | sh
+   ARCHCORE_INSTALL_DIR=/usr/local/bin curl -fsSL https://archcore.ai/install.sh | bash
    ```
 
 4. **Authenticate for private repos or rate limits**
 
    ```bash
-   GITHUB_TOKEN=ghp_xxx curl -fsSL https://archcore.ai/install.sh | sh
+   GITHUB_TOKEN=ghp_xxx curl -fsSL https://archcore.ai/install.sh | bash
    ```
 
 ### Windows
@@ -63,7 +64,7 @@ Move-Item archcore.exe C:\Users\$env:USERNAME\.local\bin\
 Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install), then run inside the WSL terminal:
 
 ```bash
-curl -fsSL https://archcore.ai/install.sh | sh
+curl -fsSL https://archcore.ai/install.sh | bash
 ```
 
 This uses the same install script as macOS / Linux — WSL provides a full Linux environment.
@@ -77,7 +78,7 @@ This uses the same install script as macOS / Linux — WSL provides a full Linux
 5. Extracts the binary and installs it atomically to the install directory
 6. Checks if the install directory is in `$PATH` and prints shell-specific guidance if not
 
-> **Note:** The install script supports macOS and Linux only. Windows users should download the `.exe` directly from GitHub Releases or use WSL.
+> **Note:** The install script requires bash (`set -euo pipefail`) and supports macOS and Linux only. Windows users should download the `.exe` directly from GitHub Releases or use WSL.
 
 ## Environment Variables
 
