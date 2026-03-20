@@ -5,24 +5,33 @@
 [![Release](https://img.shields.io/github/v/release/archcore-ai/cli)](https://github.com/archcore-ai/cli/releases)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](https://github.com/archcore-ai/cli/releases)
 
-**System Context Platform — keeps humans and AI in sync with your system.**
+**Git-native architectural memory for AI coding agents**
 
-AI coding agents start every session with amnesia. Your architectural decisions, coding standards, past incidents, and project context are scattered across wikis, Slack threads, and tribal knowledge. Each new session means re-explaining the same things.
+Archcore keeps decisions, rules, plans, incidents, and other project context versioned in your repo so Claude Code, Cursor, Copilot, Gemini CLI, and other agents share the same context across sessions.
 
-Archcore fixes this. It creates a `.archcore/` directory in your repository — a structured, version-controlled knowledge base that AI agents read automatically:
+> Archcore brings context engineering into the codebase.
 
-- **10 document types** — ADRs, RFCs, Rules, Guides, Plans, and more — each with purpose-built templates
-- **Integrates with 8 AI coding agents** — Claude Code, Cursor, Gemini CLI, GitHub Copilot, Codex CLI, OpenCode, Roo Code, and Cline
-- **MCP server** for real-time context injection into any LLM-powered tool
-- **Local-first and Git-friendly** — lives in your repo, versioned with your code, shared with your team
-- **Cloud sync** for cross-project knowledge discovery (coming soon)
+AI coding agents start every session with partial memory. Your architecture decisions, coding conventions, postmortems, and implementation plans are scattered across docs, chats, and tool-specific memory files. Archcore gives your repo a shared, structured context layer that agents can read and update.
+
+## Why Archcore
+
+- **Shared repo context** — keep architecture knowledge where code lives
+- **Works across agents** — Claude Code, Cursor, Gemini CLI, GitHub Copilot, Codex CLI, OpenCode, Roo Code, and Cline
+- **Structured documents** — ADRs, RFCs, Rules, Guides, Plans, PRDs, incidents, and more
+- **Git-native** — local-first, version-controlled, reviewable with code
+- **MCP-powered** — agents can read, create, update, and link documents in real time
+- **Built for teams** — context survives sessions, teammates, and tool changes
 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [How It Works](#how-it-works)
+- [What Lives in `.archcore/`](#what-lives-in-archcore)
+- [Why Not Just Instruction Files?](#why-not-just-instruction-files)
 - [Try It](#try-it)
+- [Document Types](#document-types)
+- [Document Relations](#document-relations)
 - [Commands](#commands)
 - [AI Agent Integration](#ai-agent-integration)
 - [Configuration](#configuration)
@@ -39,9 +48,11 @@ curl -fsSL https://archcore.ai/install.sh | bash
 cd your-project
 archcore init
 
-# Check your setup
+# Validate setup
 archcore doctor
 ```
+
+After `archcore init`, Archcore creates a `.archcore/` directory in your repo and installs integrations so your coding assistant can read and manage project context.
 
 ## Installation
 
@@ -86,58 +97,88 @@ go build -o archcore .
 
 ## How It Works
 
-1. **Initialize** — `archcore init` creates a `.archcore/` directory and auto-installs MCP server config for your AI coding agent.
-2. **Build context** — add documents through your AI agent (via MCP tools) or by hand — both work equally well.
-3. **Stay in sync** — every agent session starts with your full project context loaded automatically.
+1. **Initialize your repo**  
+   `archcore init` creates `.archcore/` and installs integrations for supported agents.
 
-```
+2. **Capture durable context**  
+   Store architecture decisions, rules, plans, product docs, and incident learnings as structured Markdown files.
+
+3. **Let agents reuse it**  
+   Hooks and MCP let your coding agents read existing context and create or update documents during real work.
+
+4. **Keep it in Git**  
+   Review context changes like code, evolve them over time, and keep them portable across tools.
+
+## What Lives in `.archcore/`
+
+```text
 .archcore/
 ├── settings.json
 ├── .sync-state.json
 ├── auth/
 │   ├── jwt-strategy.adr.md
 │   └── auth-redesign.prd.md
-├── payments/
-│   └── stripe.adr.md
-└── infrastructure/
-    └── migration.plan.md
+├── backend/
+│   └── error-wrapping.rule.md
+├── incidents/
+│   └── connection-pool-exhaustion.cpat.md
+└── notifications/
+    └── notifications-implementation.plan.md
 ```
 
-The directory structure is **free-form** — organize documents by domain, feature, team, or any structure that fits your project. Categories are virtual, derived from the document type in the filename (`slug.type.md`).
+The structure is **free-form** — organize documents by domain, feature, team, or whatever fits your repo. Categories are virtual and inferred from the document type in the filename (`slug.type.md`).
 
-*Archcore CLI is best example for how it works: https://github.com/archcore-ai/cli/tree/main/.archcore*
+Use `.archcore/` for:
+
+- architecture decisions
+- coding rules and conventions
+- implementation plans
+- product requirements
+- incidents and postmortems
+- reusable workflow knowledge
+
+See the Archcore CLI repository itself for a working example: [`.archcore/` in this repo](https://github.com/archcore-ai/cli/tree/main/.archcore)
+
+## Why Not Just Instruction Files?
+
+Files like `CLAUDE.md`, `AGENTS.md`, or repository instructions are useful, but they break down when your team needs:
+
+- more than one flat memory file
+- structured document types like ADRs, rules, plans, and incidents
+- reusable context across multiple AI tools
+- versioned project knowledge that grows with the codebase
+- relations between documents, like a plan implementing a PRD
+- incident learnings and recurring workflows that agents can reuse later
+
+Archcore complements agent-native memory by giving your repo a durable architectural memory layer.
 
 ## Try It
 
 After `archcore init`, open your AI agent and start talking. The agent already knows your existing documents and has tools to create new ones.
 
-> "We decided to use PostgreSQL instead of MongoDB for our primary database. Record this decision."
+> “We decided to use PostgreSQL instead of MongoDB for our primary database. Record this decision.”
 
-Creates `infrastructure/use-postgres.adr.md` — Context, Decision, Alternatives Considered, and Consequences filled from your conversation.
+Creates `infrastructure/use-postgres.adr.md` with context, decision, alternatives considered, and consequences.
 
-> "We have a team convention: always wrap errors with context using fmt.Errorf and %w. Make this a rule."
+> “We have a team convention: always wrap errors with context using fmt.Errorf and %w. Make this a rule.”
 
-Creates `backend/error-wrapping.rule.md` with imperative statements, rationale, and good/bad code examples.
+Creates `backend/error-wrapping.rule.md` with imperative guidance, rationale, and good/bad code examples.
 
-> "Last week we had a connection pool exhaustion incident because idle connections weren't being recycled. Document this so we don't repeat it."
+> “Last week we had a connection pool exhaustion incident because idle connections weren't being recycled. Document this so we don't repeat it.”
 
-Creates `incidents/connection-pool-exhaustion.cpat.md` — root cause analysis and prevention steps.
+Creates `incidents/connection-pool-exhaustion.cpat.md` with root-cause analysis and prevention steps.
 
-> "I need a PRD for the user notifications feature — push, email digests, and in-app alerts."
+> “I need a PRD for the user notifications feature — push, email digests, and in-app alerts.”
 
 Creates `notifications/user-notifications.prd.md` with goals, user stories, requirements, and success metrics.
 
-> "Create an implementation plan for the notifications PRD and link them together."
+> “Create an implementation plan for the notifications PRD and link them together.”
 
-Creates `notifications/notifications-implementation.plan.md` with phased tasks, then links it to the PRD with an `implements` relation.
+Creates `notifications/notifications-implementation.plan.md`, then links it to the PRD with an `implements` relation.
 
-> "Quick idea: what if we added a GraphQL API alongside REST?"
+## Document Types
 
-Creates `api/graphql-support.idea.md` — lightweight capture with value assessment and possible implementation.
-
-### Document Types
-
-Arcor has 3 fundamental layers of knowledge: Vision, Knowledge, Experience.
+Archcore organizes context into 3 layers of knowledge: Vision, Knowledge, and Experience.
 
 | Type | Full Name | Category | Description |
 |------|-----------|----------|-------------|
@@ -146,11 +187,11 @@ Arcor has 3 fundamental layers of knowledge: Vision, Knowledge, Experience.
 | `plan` | Plan | Vision | Phased task list with acceptance criteria and dependencies |
 | `adr` | Architecture Decision Record | Knowledge | Captures a finalized technical decision with context, alternatives, and consequences |
 | `rfc` | Request for Comments | Knowledge | Proposes a significant change open for team review and feedback |
-| `rule` | Rule | Knowledge | Coding or process standard — imperative statements with good/bad examples |
-| `guide` | Guide | Knowledge | Step-by-step how-to instructions for completing a specific task |
-| `doc` | Document | Knowledge | Reference documentation — lookup tables, registries, descriptive material |
-| `task-type` | Task Type | Experience | Recurring workflow pattern — reusable checklist and workflow for a common task |
-| `cpat` | Code Change Patterns | Experience | Root-cause analysis of a bug or incident with prevention steps |
+| `rule` | Rule | Knowledge | Coding or process standard with imperative guidance and examples |
+| `guide` | Guide | Knowledge | Step-by-step instructions for completing a specific task |
+| `doc` | Document | Knowledge | Reference documentation, registries, and descriptive material |
+| `task-type` | Task Type | Experience | Reusable checklist and workflow for a recurring task |
+| `cpat` | Code Change Pattern | Experience | Root-cause analysis of a bug or incident with prevention steps |
 
 Each document is a Markdown file with YAML frontmatter:
 
@@ -164,9 +205,9 @@ status: draft
 ...
 ```
 
-Valid statuses: `draft`, `accepted`, `rejected` for all types of documents.
+Valid statuses: `draft`, `accepted`, and `rejected`.
 
-### Document Relations
+## Document Relations
 
 Documents can be linked with directed relations to other documents:
 
@@ -186,7 +227,7 @@ Relations are stored in `.sync-state.json` and managed automatically by the AI a
 | `archcore validate` | Validate document structure and frontmatter |
 | `archcore config` | View or modify settings |
 | `archcore hooks install` | Install hooks for detected AI agents |
-| `archcore update` | Update archcore to the latest version |
+| `archcore update` | Update Archcore to the latest version |
 | `archcore mcp` | Run the MCP stdio server |
 | `archcore mcp install` | Install MCP config for detected agents |
 
@@ -243,8 +284,8 @@ Settings are stored in `.archcore/settings.json` and created during `archcore in
 
 | Field | Description | Values |
 |-------|-------------|--------|
-| `sync` | Sync mode. Cloud and on-prem coming soon. | `none` (local only), `cloud`, `on-prem` |
-| `language` | Documents language. Helps the agent understand in which language to generate documentation | String, defaults to `en` |
+| `sync` | Sync mode. Cloud and on-prem are coming soon. | `none` (local only), `cloud`, `on-prem` |
+| `language` | Document language. Helps the agent generate documentation in the right language. | String, defaults to `en` |
 
 ```bash
 archcore config                              # show all settings
@@ -276,17 +317,17 @@ go test ./cmd/ -run TestConfigCmd
 
 ### Project Structure
 
-```
+```text
 ├── cmd/              # Cobra commands (init, doctor, config, validate, hooks, mcp, ...)
 ├── internal/
-│   ├── agents/       # 8 supported AI agents with hooks/MCP capabilities
+│   ├── agents/       # Supported AI agents with hooks/MCP capabilities
 │   ├── api/          # HTTP client for archcore server
 │   ├── config/       # Settings management and directory init
 │   ├── display/      # Terminal output formatting (lipgloss)
 │   ├── update/       # Self-update logic (version check, download, verify, replace)
 │   ├── mcp/          # MCP stdio server implementation
 │   └── sync/         # Sync logic
-├── templates/        # 10 document type templates
+├── templates/        # Document type templates
 ├── install.sh        # Install script
 └── .goreleaser.yaml  # Release configuration
 ```
