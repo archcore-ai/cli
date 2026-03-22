@@ -204,6 +204,16 @@
       "source": "document-types/mrd-brd-urd-implementation.plan.md",
       "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
       "type": "implements"
+    },
+    {
+      "source": "mcp/tags-implementation.plan.md",
+      "target": "mcp/no-absolute-paths-in-mcp-errors.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/tags-implementation.plan.md",
+      "target": "dir/free-form-directory-structure.adr.md",
+      "type": "extends"
     }
   ]
 }
