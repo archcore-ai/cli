@@ -1,30 +1,53 @@
 {
   "version": 1,
   "files": {
-    "cli-ui/building-the-cli.guide.md": "ab1466d9ee5d17ae9d73ca545cc8ca6b1d7dd11864034ff964676de88afde64d",
+    "cli-ui/building-the-cli.guide.md": "b9af193c4702f7cd58ef397626bed6883128171a1ef8f08b8f939aab271bc194",
+    "cli-ui/language-setting.idea.md": "15f4825bc8f52cea1f249e6cc601997a62357584756f99affcd45642cda2e07d",
     "cli-ui/project-deletion-via-repo.idea.md": "88984fdff4a5e8af797a4d4322ed6e4c17e81c541c9a35959f2db29a2a9055cb",
-    "dir/archcore-directory-structure.guide.md": "39972d4391ce460a25d7560a85b9e0f706d9d3e356626ba855db3887c45992cb",
-    "dir/free-form-directory-rules.rule.md": "f9db0f527900e33f49cd5ae3bc0db71e1c30b0cbbda87baa3f3922e55be56f17",
-    "dir/free-form-directory-structure.adr.md": "ab2fbd9114a6695ae197b56fcaf7a91ea93407c6aec2dcf603285b634e34ab71",
+    "cli-ui/version-in-banners.idea.md": "af87637c17ae6daab662b1be2166fafd4650ff861d91f4e281ca0019381f46ca",
+    "cli/archcore-first-search-priority.rule.md": "9a8bf693cbd1d8122cef2f9da7ae93930ea67388aa859848170e788628a3816a",
+    "cli/feature-gating-at-command-layer.rule.md": "6f1455376768506f232ec5b17002b3bae6565f8e1f5d0eca50880b7efa2456d2",
+    "cli/import-existing-context.idea.md": "5818488f4ff837b7d5f5e23124938f403d9f0b8345ca5caed6860831369a8356",
+    "cli/optional-settings-omit-defaults.rule.md": "9ea14bac983c2ed489114261a761b8da0760c668216fa988899b466e0170a471",
+    "dir/archcore-directory-structure.guide.md": "0bcd20721e9b69e05e9a31f5b1da2d38254707e0f593c7609a860094c4f4b0a1",
+    "dir/categories-and-document-types.doc.md": "9ae300c1a074fa5980a174f71fcbef1bcd449317d0317d8f59a42037a3d0ee59",
+    "dir/free-form-directory-rules.rule.md": "3122fbd4a096662d1e6b84aa2cd5f8c234364db9eef43eeff8cd78e8b9be2a84",
+    "dir/free-form-directory-structure.adr.md": "359025839a37daeffe59dab3a19a599afffa6229da73edca3e4e47b5e90a4ab7",
+    "document-types/iso-29148-document-types-implementation.plan.md": "163d65b856a0df5616c89565e28b4758bb70fe877f15a5687075d032e577e79b",
+    "document-types/mrd-brd-urd-implementation.plan.md": "d97a1fe1c5c1aa53406b07177bea67acb7c35a03dad0f1bc7b3a83d2f01a89b3",
+    "document-types/mrd-brd-urd-requirement-sources.idea.md": "56d584fe86b34c22a5476beb6219df39509e789c3055e32986fe105f60c83373",
+    "document-types/prd-vs-iso-29148-requirements-strategy.idea.md": "ed4ad8c51809a32cb29687553578ae651d4fe1789a39aa1d9dcf7b12f7a32972",
+    "document-types/remove-project-document-type.adr.md": "2d70783d975b6b31b034903455fb952f32ca727443155bce98d929154593c333",
+    "document-types/spec-type-usage.rule.md": "051098a115e5e557213cd5d2b5fa9e460e32b205c8ab5771156679de14fe0fbd",
+    "document-types/writing-spec-documents.guide.md": "af5f8272bf40ae719673fea86492c0be76e3ed5e7e286121aff9336e07f35a1b",
     "integrations/agent-hooks-integration.guide.md": "54509050bc6accbbcb0170c8f2c4df56c3708da8959b58ff6ac24de0dd8dbc52",
     "integrations/backup-invalid-configs.adr.md": "a96a5ad0cc21737560940e073c6ae4d62dd22ec82db3a87bee19bbf55ac9567a",
-    "integrations/cli-hooks-reference.doc.md": "54d8340e368ff89b38f859be6323c75d818f329fe36b653c2bd2818af3e2910e",
-    "integrations/supported-ai-agents.doc.md": "151308f93087835af5a026297b2a1fb2bee8cf9808b095e83965a5b34f1dbca6",
+    "integrations/cli-hooks-reference.doc.md": "38877e79d349529fd654d1000190e324c2676e62fa2f73e51a2b2bf503fe36e2",
+    "integrations/disable-stop-and-prompt-hooks.adr.md": "420b04465a7e59de2d2368887ff71c1e2f41e86ac419b890834c154551b6e744",
+    "integrations/supported-ai-agents.doc.md": "72b776f3398551d157f1b15a10386dd17045c7d213f3939f9a6160b87e4ccaab",
+    "mcp/no-absolute-paths-in-mcp-errors.rule.md": "0fc86b170ce9d775901c8396bf6ccec3481b54d12e364bf87f73cb3b8400a376",
+    "mcp/tags-implementation.plan.md": "fdfa04b70f085bc5b0cf873546d5d44730b595f0961541bd1014b368f630bb61",
+    "relations/local-relations-in-sync-state.adr.md": "8b7cf80c829465156ad27040f6365c7f91e5e9ceddb112242a88f533840bebf0",
+    "release/how-to-release.guide.md": "d43f8e096454e9a6408dbaa02282272411389823a3654d4e5648a2efb1f57422",
+    "release/install-script-usage.guide.md": "54034c7cf400d7940620b9fc579a8187aa48d0e4f330edd91dde3fff91c803e9",
+    "release/release-infrastructure.doc.md": "7a3bf8de0faf6296a2fbd83be4381c19698ca40664853934b061a0f219d3ce53",
+    "release/version-injection-via-ldflags.rule.md": "5e46bfc5238f58906a1b4bf2d1aa17743d37df667c841340bf6e4d7703e6c871",
+    "sync/auto-detect-repo-url-on-sync.adr.md": "2ed41cd122176c9f6461fb90ca005b2a75d2b8cd9e66de364b386a38c47c689b",
     "sync/one-way-push-sync-strategy.adr.md": "911131db9ba1bf575ab9d3f091138d07b27bca2fbcddd411ca2f8c2a881a57c5",
-    "sync/sync-command-implementation.plan.md": "9f35747efe19d7d39f7561c0e2f9ad2300c8bc0fedbab4fb21d58dc31164c072",
-    "sync/sync-design.idea.md": "fdba2863c7fed87a6ca87750ef1d36f78130802dc4fba70b18e22b943c375a3f",
-    "sync/sync-how-it-works.guide.md": "393a152643c6de561f3f7f9bc594b669b0c84766ecbae269d9d61fd7cbd15d96",
+    "sync/sync-command-implementation.plan.md": "40dba775242834c898681f47c0c0eca6fe9b141f0a081f4252f477413142db6a",
+    "sync/sync-design.idea.md": "8fa7b2125e7a92ffb1220d1dcafd2512e61666b1f621fce56950c66cc9e59da0",
+    "sync/sync-how-it-works.guide.md": "541b1285ce3f3428f09c897c96de0ce88cfaef9b2ad462ff79de9376f300f409",
     "sync/sync-manifest-update-on-success-only.rule.md": "49dc9ff0f029dc1436d15a8ff60d56d19c830ce2df5c5ed3357221db9472373f",
-    "sync/sync-mode-field-validation.rule.md": "766604fee1572f7a2f24a1c1ed917009eff8909f21aebeceff38eca948547ba7",
+    "sync/sync-mode-field-validation.rule.md": "978a5da40a0a187e3fa8b8899f4666ebbd6f9e8ed78afc28c3fb1c620d1bbfba",
     "sync/sync-path-security.rule.md": "256768e99f55331cd857ffa3056668f2a5a5f9be7f5a998bca59137a93265937",
-    "sync/sync-source-of-truth.rule.md": "c36526edd5d7e9bcd8b692227a3dfa3810fe46b49d9c35b67497574e22bf14b3"
+    "sync/sync-source-of-truth.rule.md": "c36526edd5d7e9bcd8b692227a3dfa3810fe46b49d9c35b67497574e22bf14b3",
+    "sync/temporarily-disable-sync.adr.md": "e0df05e12a2654e37c98654ca3abb84dc85ee5110de658cc3c0bac168d909524",
+    "telemetry/telemetry-provider-selection.rfc.md": "fcadaa62249c6dcc437e71852bb8c598a9dc412c5eb9ede68871a080ecddc153",
+    "update/self-update-command.guide.md": "e14595e532bfc750b99598887e4bb7ef4ea74a20942f9192f820db0f5b20c5a2",
+    "update/update-version-check-strategy.rfc.md": "6680f6bfc9e561c997ba17a9b436e54ff71c920a22cdad3d2eb1f9254c9bba1c",
+    "update/version-check-proxy.idea.md": "7bec4bfb32dac8330d4521a3648404e767e09d58bfaf55c250b02fd98f2a33b8"
   },
   "relations": [
-    {
-      "source": "cli-ui/language-setting-no-mcp-effect.cpat.md",
-      "target": "cli-ui/language-setting.idea.md",
-      "type": "related"
-    },
     {
       "source": "cli/optional-settings-omit-defaults.rule.md",
       "target": "cli-ui/language-setting.idea.md",
@@ -81,86 +104,6 @@
       "type": "related"
     },
     {
-      "source": "cli/version-check-proxy.idea.md",
-      "target": "cli/archcore-first-search-priority.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/version-check-proxy.idea.md",
-      "target": "cli/feature-gating-at-command-layer.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/version-check-proxy.idea.md",
-      "target": "cli/optional-settings-omit-defaults.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/update-version-check-strategy.rfc.md",
-      "target": "cli/archcore-first-search-priority.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/update-version-check-strategy.rfc.md",
-      "target": "cli/feature-gating-at-command-layer.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/update-version-check-strategy.rfc.md",
-      "target": "cli/optional-settings-omit-defaults.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/update-version-check-strategy.rfc.md",
-      "target": "cli/version-check-proxy.idea.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/update-version-check-strategy.rfc.md",
-      "target": "cli/version-check-proxy.idea.md",
-      "type": "extends"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "cli/archcore-first-search-priority.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "cli/feature-gating-at-command-layer.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "cli/optional-settings-omit-defaults.rule.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "cli/update-version-check-strategy.rfc.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "cli/version-check-proxy.idea.md",
-      "type": "related"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "release/release-infrastructure.doc.md",
-      "type": "depends_on"
-    },
-    {
-      "source": "cli/self-update-command.guide.md",
-      "target": "release/install-script-usage.guide.md",
-      "type": "related"
-    },
-    {
-      "source": "telemetry/telemetry-provider-selection.rfc.md",
-      "target": "telemetry/posthog-telemetry-implementation.plan.md",
-      "type": "related"
-    },
-    {
       "source": "dir/categories-and-document-types.doc.md",
       "target": "dir/archcore-directory-structure.guide.md",
       "type": "related"
@@ -214,6 +157,96 @@
       "source": "mcp/tags-implementation.plan.md",
       "target": "dir/free-form-directory-structure.adr.md",
       "type": "extends"
+    },
+    {
+      "source": "document-types/spec-type-usage.rule.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/spec-type-usage.rule.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/spec-type-usage.rule.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/spec-type-usage.rule.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "document-types/spec-type-usage.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/spec-type-usage.rule.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/writing-spec-documents.guide.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/spec-type-usage.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "document-types/writing-spec-documents.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/remove-project-document-type.adr.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
     }
   ]
 }

@@ -261,6 +261,7 @@ func TestHandleCreateDocument_AllTypes(t *testing.T) {
 		{"rule", "knowledge", "Rule as imperative statement"},
 		{"guide", "knowledge", "## Steps"},
 		{"doc", "knowledge", "## Content"},
+		{"spec", "knowledge", "## Normative Behavior"},
 		{"task-type", "experience", "## When to Use"},
 		{"cpat", "experience", "## What Changed"},
 		{"prd", "vision", "### Product Vision Statement"},
@@ -518,6 +519,53 @@ func TestHandleCreateDocument_NearbyDocuments_Empty(t *testing.T) {
 	}
 	if _, ok := info["nearby_documents"]; ok {
 		t.Error("expected no nearby_documents when directory is empty")
+	}
+}
+
+func TestHandleCreateDocument_MissingFilename(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleCreateDocument(base), map[string]any{
+		"type": "adr",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for missing filename")
+	}
+}
+
+func TestHandleCreateDocument_ContentOnlyFrontmatter(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleCreateDocument(base), map[string]any{
+		"type":     "adr",
+		"filename": "frontmatter-only",
+		"title":    "Frontmatter Only",
+		"content":  "---\ntitle: Ignored\nstatus: draft\n---",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "frontmatter-only.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	// Should have frontmatter from tool params, not from content.
+	if !strings.Contains(content, `title: "Frontmatter Only"`) {
+		t.Error("expected title from tool parameter")
+	}
+	// Body should be empty since content was only frontmatter.
+	if strings.Count(content, "---\n") > 2 {
+		t.Errorf("duplicate frontmatter detected:\n%s", content)
 	}
 }
 

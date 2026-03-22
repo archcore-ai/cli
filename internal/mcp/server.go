@@ -20,7 +20,7 @@ Example structures:
   .archcore/my-doc.rule.md                   → virtual category: knowledge (root level)
 
 Document types and their virtual categories:
-  knowledge: adr (decisions), rfc (proposals), rule (standards), guide (how-tos), doc (reference), project (project overview)
+  knowledge: adr (decisions), rfc (proposals), rule (standards), guide (how-tos), doc (reference), spec (contracts)
   vision:    prd (requirements), idea (concepts), plan (action plans)
   experience: task-type (typical task patterns), cpat (code pattern changes)
 
@@ -51,8 +51,8 @@ WHEN TO CREATE:
 - A significant change is being proposed for team review → rfc
 - A team standard or required behavior is established → rule
 - Step-by-step instructions for completing a task → guide
-- Reference information, registries, lookup tables, or general documentation → doc
-- A project overview with architecture, components, and getting-started info → project
+- Non-behavioral reference material — registries, lookup tables, glossaries, or component lists → doc
+- The canonical normative contract for a concrete system, component, interface, schema, or protocol is being formalized → spec
 - A proven workflow for a recurring implementation task is documented → task-type
 - A coding pattern, convention, or approach has deliberately changed → cpat
 - A product concept or technical idea needs capturing → idea
@@ -72,9 +72,12 @@ WHEN TO DELETE (use remove_document):
 - Always confirm with the user before deleting — this is permanent and removes all relations.
 
 TYPE SELECTION RULES (use these to disambiguate):
-- rule vs doc: A rule contains imperative statements ("Always do X", "Never do Y") with good/bad code examples and enforcement info. A doc is descriptive reference material (tables, registries, explanations). If the content describes what exists rather than prescribing behavior, use doc.
+- rule vs doc: A rule contains imperative statements ("Always do X", "Never do Y") with good/bad code examples and enforcement info. A doc is non-behavioral reference material (tables, registries, glossaries). If the content describes what exists rather than prescribing behavior, use doc.
 - adr vs rfc: An adr records a decision already made. An rfc proposes a change open for review. If the decision is final, use adr; if still open for feedback, use rfc.
-- guide vs doc: A guide has numbered steps the reader follows sequentially. A doc is non-sequential reference material. If the reader is meant to do something step-by-step, use guide; if they look things up, use doc.
+- guide vs doc: A guide has numbered steps the reader follows sequentially. A doc is non-sequential, non-behavioral reference material. If the reader is meant to do something step-by-step, use guide; if they look things up, use doc.
+- spec vs doc: A spec documents the canonical normative contract of a concrete technical boundary — externally observable behavior, constraints, invariants, and conformance requirements. A doc describes what already exists (tables, registries, glossaries) without normative requirements. If the document defines a normative contract for a specific artifact, use spec.
+- spec vs rule: A spec is a technical contract for a component or interface — it specifies what correct behavior is. A rule is a team standard for how engineers must act ("Always do X"). If the content is about a system's required behavior rather than a human practice, use spec.
+- spec vs adr: A spec is the living canonical truth of how something works. An adr is the decision record explaining why a choice was made. A single decision may produce both: the adr captures the "why", the spec captures the "what". If the content is prescriptive and meant to be kept current, use spec; if it records a past decision, use adr.
 
 VALID STATUS VALUES:
   draft     — default for new documents; work in progress

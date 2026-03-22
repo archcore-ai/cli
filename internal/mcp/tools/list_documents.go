@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -22,11 +23,11 @@ Returns: a JSON array of documents, each with path, title, type, category, and s
 
 Use the returned paths directly as input to get_document. Do not construct paths manually.`),
 		mcp.WithArray("types",
-			mcp.Description("Filter by one or more document types. Valid values: adr, rfc, rule, guide, doc, prd, idea, plan, task-type, cpat. Example: [\"adr\", \"rule\"] returns only decision records and standards."),
+			mcp.Description("Filter by one or more document types. Valid values: adr, rfc, rule, guide, doc, spec, prd, idea, plan, task-type, cpat. Example: [\"adr\", \"rule\"] returns only decision records and standards."),
 			mcp.WithStringItems(),
 		),
 		mcp.WithString("category",
-			mcp.Description(`Filter by virtual category (derived from document type, not directory). Use "knowledge" for decisions/standards/guides/docs/proposals, "vision" for requirements/ideas/plans, "experience" for task patterns and code pattern changes.`),
+			mcp.Description(`Filter by virtual category (derived from document type, not directory). Use "knowledge" for decisions/standards/guides/specs/docs/proposals, "vision" for requirements/ideas/plans, "experience" for task patterns and code pattern changes.`),
 			mcp.Enum("vision", "knowledge", "experience"),
 		),
 		mcp.WithString("status",
@@ -54,7 +55,7 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 
 		var filtered []LocalDocument
 		for _, doc := range docs {
-			if len(types) > 0 && !containsStr(types, doc.Type) {
+			if len(types) > 0 && !slices.Contains(types, doc.Type) {
 				continue
 			}
 			if category != "" && doc.Category != category {
@@ -75,15 +76,6 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 			Content: []mcp.Content{mcp.NewTextContent(string(data))},
 		}, nil
 	}
-}
-
-func containsStr(slice []string, s string) bool {
-	for _, v := range slice {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 func errorResult(msg string) *mcp.CallToolResult {

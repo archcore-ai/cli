@@ -73,6 +73,12 @@ func TestGenerateTemplate(t *testing.T) {
 			wantContains: []string{"## Goal", "## Tasks", "## Acceptance Criteria", "## Dependencies", "## Notes"},
 		},
 		{
+			name:         "Spec template",
+			documentType: TypeSpec,
+			wantEmpty:    false,
+			wantContains: []string{"## Purpose", "## Scope", "## Authority", "## Subject", "## Contract Surface", "## Normative Behavior", "## Constraints", "## Invariants", "## Error Handling", "## Conformance"},
+		},
+		{
 			name:         "Unknown type falls back to doc template",
 			documentType: DocumentType("unknown"),
 			wantEmpty:    false,
@@ -82,6 +88,7 @@ func TestGenerateTemplate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got := GenerateTemplate(tt.documentType)
 
 			if tt.wantEmpty {
@@ -231,6 +238,64 @@ func TestGenerateDocTemplate(t *testing.T) {
 	}
 }
 
+func TestGenerateSpecTemplate(t *testing.T) {
+	template := generateSpecTemplate()
+
+	requiredSections := []string{
+		"## Purpose",
+		"## Scope",
+		"## Authority",
+		"## Subject",
+		"## Definitions",
+		"## Contract Surface",
+		"### Interfaces",
+		"### Inputs",
+		"### Outputs",
+		"## Normative Behavior",
+		"### Preconditions",
+		"### Postconditions",
+		"## Constraints",
+		"## Invariants",
+		"## Error Handling",
+		"### Failure Semantics",
+		"## Conformance",
+	}
+
+	for _, section := range requiredSections {
+		if !strings.Contains(template, section) {
+			t.Errorf("Spec template missing section: %q", section)
+		}
+	}
+
+	// Spec must contain code blocks for conformance-critical examples.
+	codeBlockCount := strings.Count(template, "```")
+	if codeBlockCount%2 != 0 {
+		t.Errorf("code block markers = %d, should be even", codeBlockCount)
+	}
+	if codeBlockCount < 2 {
+		t.Errorf("Spec template should have at least 1 code block pair, got %d markers", codeBlockCount)
+	}
+
+	// Spec must contain tables for definitions, inputs, outputs, constraints, error handling.
+	pipeCount := strings.Count(template, "|")
+	if pipeCount < 30 {
+		t.Errorf("Spec template should have substantial table content, got %d pipe characters", pipeCount)
+	}
+
+	// Spec must contain RFC 2119 normative keywords.
+	for _, keyword := range []string{"MUST", "SHOULD", "MAY"} {
+		if !strings.Contains(template, keyword) {
+			t.Errorf("Spec template missing RFC 2119 keyword: %q", keyword)
+		}
+	}
+
+	// Optional sections must be marked with "Include only if" guidance.
+	optionalMarkers := strings.Count(template, "Include only if")
+	if optionalMarkers < 3 {
+		t.Errorf("Spec template should mark optional sections, got %d 'Include only if' markers", optionalMarkers)
+	}
+}
+
 func TestGenerateTaskTypeTemplate(t *testing.T) {
 	template := generateTaskTypeTemplate()
 
@@ -339,6 +404,11 @@ func TestTemplateStructure(t *testing.T) {
 			minLength:    600,
 		},
 		{
+			name:         "Spec has substantial content",
+			documentType: TypeSpec,
+			minLength:    2000,
+		},
+		{
 			name:         "TaskType has substantial content",
 			documentType: TypeTaskType,
 			minLength:    500,
@@ -377,7 +447,7 @@ func TestTemplateStructure(t *testing.T) {
 }
 
 func TestTemplateMarkdownFormatting(t *testing.T) {
-	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan}
+	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeSpec, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan}
 
 	for _, typ := range types {
 		t.Run(string(typ), func(t *testing.T) {

@@ -35,8 +35,10 @@ Document types and when to use each:
                 § required sections: Rule (imperative statements), Rationale, Examples (Good/Bad), Enforcement
   guide     — Step-by-step instructions for completing a task
                 § required sections: Prerequisites, Steps (numbered), Verification, Common Issues
-  doc       — General reference documentation (use when no other type fits)
+  doc       — Non-behavioral reference material: registries, glossaries, lookup tables, component lists
                 § required sections: Overview, Content (sections/tables), Examples
+  spec      — Canonical normative contract for a concrete system, component, interface, schema, or protocol
+                § required sections: Purpose, Scope, Authority, Subject, Contract Surface, Normative Behavior, Constraints, Invariants, Error Handling, Conformance
   prd       — Product requirements with goals, scope, and acceptance criteria
                 § required sections: Vision, Problem Statement, Goals and Success Metrics, Requirements
   idea      — A product or technical concept worth exploring
@@ -52,6 +54,9 @@ TYPE DISAMBIGUATION:
 - rule vs doc: rule prescribes behavior ("Always do X") with good/bad examples and enforcement. doc describes what exists (tables, registries, explanations). Descriptive content → doc.
 - adr vs rfc: adr = decision already final. rfc = proposal open for feedback.
 - guide vs doc: guide = sequential steps to follow. doc = non-sequential reference to look things up.
+- spec vs doc: spec documents a canonical normative contract for a concrete technical boundary (behavior, constraints, invariants, conformance). doc describes what exists (registries, glossaries, tables) without normative requirements. Normative contract → spec; structural reference → doc.
+- spec vs rule: spec is a technical contract for a system component. rule is a team practice standard. System behavior contract → spec; human behavior standard → rule.
+- spec vs adr: spec is the living definition of correct behavior, kept current. adr is a fixed record of a past decision. Maintained contract → spec; historical decision → adr.
 
 Returns: JSON with path, type, category, title, status, and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
 		mcp.WithString("type",
@@ -145,7 +150,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			dir = filepath.Join(baseDir, ".archcore")
 		}
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return errorResult(fmt.Sprintf("creating directory %q: %v", directory, err)), nil
+			return nil, fmt.Errorf("creating directory %q: %w", directory, err)
 		}
 
 		outputFile := filepath.Join(dir, filename+"."+docType+".md")
@@ -170,7 +175,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 		fileContent := buildDocumentFile(title, status, body)
 
 		if err := os.WriteFile(outputFile, []byte(fileContent), 0o644); err != nil {
-			return errorResult(fmt.Sprintf("writing %s: failed to write file", relPath)), nil
+			return nil, fmt.Errorf("writing %s: %w", relPath, err)
 		}
 
 		result := map[string]any{
@@ -205,7 +210,9 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 						}
 					}
 					if len(added) > 0 {
-						if saveErr := sync.SaveManifest(baseDir, m); saveErr == nil {
+						if saveErr := sync.SaveManifest(baseDir, m); saveErr != nil {
+							result["auto_relations_error"] = saveErr.Error()
+						} else {
 							result["auto_relations_added"] = added
 						}
 					}
@@ -215,7 +222,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 
 		data, err := json.Marshal(result)
 		if err != nil {
-			return errorResult(fmt.Sprintf("marshaling result: %v", err)), nil
+			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
 		return &mcp.CallToolResult{

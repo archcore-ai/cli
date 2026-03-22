@@ -45,7 +45,7 @@ An `archcore import` command that takes existing context files (CLAUDE.md, .curs
 2. **Parse and map**: split the file into logical blocks, each block → a separate archcore document:
    - Build/test instructions → `guide`
    - Rules and conventions → `rule`
-   - Architecture/overview → `project` or `doc`
+   - Architecture/overview → `doc`
    - If meaningful splitting isn't possible → a single `doc` with the imported content
 
 3. **CLI interface**:
