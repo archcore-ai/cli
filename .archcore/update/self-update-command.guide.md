@@ -46,7 +46,7 @@ archcore update
 
 **Output when update is available:**
 ```
-Archcore — System Context Platform
+Archcore — Shared architectural memory for AI coding agents
 
   Checking for updates...
   ✓ Current: v1.0.0
@@ -59,7 +59,7 @@ Archcore — System Context Platform
 
 **Output when already up to date:**
 ```
-Archcore — System Context Platform
+Archcore — Shared architectural memory for AI coding agents
 
   Checking for updates...
   ✓ Current: v1.1.0

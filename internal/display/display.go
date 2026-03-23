@@ -17,7 +17,7 @@ var (
 )
 
 func Banner() string {
-	return Title.Render("Archcore") + Dim.Render(" — System Context Platform")
+	return Title.Render("Archcore") + Dim.Render(" — Shared architectural memory for AI coding agents")
 }
 
 func WelcomeBanner() string {
@@ -31,8 +31,8 @@ func WelcomeBanner() string {
 	logo := Logo.Render(strings.Join(logoLines, "\n"))
 
 	textLines := []string{
-		Title.Render("Archcore — System Context Platform"),
-		Dim.Render("Keeps humans and AI in sync with your system"),
+		Title.Render("Archcore — Shared architectural memory for AI coding agents"),
+		Dim.Render("Context engineering for your codebase"),
 		Dim.Render("https://archcore.ai"),
 	}
 	text := strings.Join(textLines, "\n")
