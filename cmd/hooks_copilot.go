@@ -35,13 +35,13 @@ var copilotHookEvents = []struct {
 	{"sessionStart", "archcore hooks copilot session-start"},
 }
 
-func newHooksCopilotCmd() *cobra.Command {
+func newHooksCopilotCmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "copilot",
 		Short: "Handle GitHub Copilot hook events",
 	}
 	cmd.AddCommand(
-		newSessionStartHookCmd("session-start", "Handle Copilot SessionStart hook event"),
+		newSessionStartHookCmd("session-start", "Handle Copilot SessionStart hook event", version),
 	)
 	return cmd
 }

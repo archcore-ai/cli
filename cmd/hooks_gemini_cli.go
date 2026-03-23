@@ -23,13 +23,13 @@ var geminiHookEvents = []struct {
 	{"SessionStart", "archcore hooks gemini-cli session-start"},
 }
 
-func newHooksGeminiCLICmd() *cobra.Command {
+func newHooksGeminiCLICmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gemini-cli",
 		Short: "Handle Gemini CLI hook events",
 	}
 	cmd.AddCommand(
-		newSessionStartHookCmd("session-start", "Handle Gemini CLI SessionStart hook event"),
+		newSessionStartHookCmd("session-start", "Handle Gemini CLI SessionStart hook event", version),
 	)
 	return cmd
 }
@@ -50,7 +50,7 @@ func runGeminiCLIHooksInstall(baseDir string) error {
 	var raw map[string]json.RawMessage
 	data, err := os.ReadFile(settingsPath)
 	if err == nil {
-		if err := json.Unmarshal(data, &raw); err != nil {
+		if unmarshalErr := json.Unmarshal(data, &raw); unmarshalErr != nil {
 			_ = os.WriteFile(settingsPath+".bak", data, 0o644)
 			fmt.Println(display.WarnLine(fmt.Sprintf("Corrupted %s backed up, starting fresh", settingsPath)))
 			raw = make(map[string]json.RawMessage)

@@ -60,6 +60,6 @@ func KeyValue(key, value string) string {
 	return fmt.Sprintf("  %s %s", Dim.Render(key+":"), value)
 }
 
-func HookConnectedLine(docCount int) string {
-	return fmt.Sprintf("[archcore] MCP connected · %d docs", docCount)
+func HookConnectedLine(version string, docCount int) string {
+	return fmt.Sprintf("Archcore %s · MCP connected · %d docs", version, docCount)
 }

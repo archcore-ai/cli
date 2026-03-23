@@ -46,25 +46,25 @@ func readHookInput(r io.Reader) (*hookInput, error) {
 	return &input, nil
 }
 
-func newHooksClaudeCodeCmd() *cobra.Command {
+func newHooksClaudeCodeCmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "claude-code",
 		Short: "Handle Claude Code hook events",
 	}
 	cmd.AddCommand(
-		newSessionStartCmd(),
+		newSessionStartCmd(version),
 	)
 	return cmd
 }
 
-func newSessionStartCmd() *cobra.Command {
-	return newSessionStartHookCmd("session-start", "Handle SessionStart hook event")
+func newSessionStartCmd(version string) *cobra.Command {
+	return newSessionStartHookCmd("session-start", "Handle SessionStart hook event", version)
 }
 
 // --- Hook command factories ---
 
 // newSessionStartHookCmd creates a session-start hook command (shared across agents).
-func newSessionStartHookCmd(use, short string) *cobra.Command {
+func newSessionStartHookCmd(use, short, version string) *cobra.Command {
 	return &cobra.Command{
 		Use:    use,
 		Short:  short,
@@ -78,7 +78,7 @@ func newSessionStartHookCmd(use, short string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := handleSessionStart(baseDir)
+			out, err := handleSessionStart(baseDir, version)
 			if err != nil {
 				return err
 			}
@@ -90,14 +90,14 @@ func newSessionStartHookCmd(use, short string) *cobra.Command {
 
 // --- Session Start Handler (Claude Code adapter) ---
 
-func handleSessionStart(baseDir string) ([]byte, error) {
+func handleSessionStart(baseDir, version string) ([]byte, error) {
 	ctx, docCount := buildSessionContext(baseDir)
 	output := hookOutput{
 		HookSpecificOutput: map[string]any{
 			"hookEventName":     "SessionStart",
 			"additionalContext": ctx,
 		},
-		SystemMessage: display.HookConnectedLine(docCount),
+		SystemMessage: display.HookConnectedLine(version, docCount),
 	}
 	return json.Marshal(output)
 }

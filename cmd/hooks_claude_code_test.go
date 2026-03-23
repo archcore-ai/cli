@@ -50,7 +50,7 @@ func TestHandleSessionStart_WithDocuments(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := handleSessionStart(base)
+	data, err := handleSessionStart(base, "v0.1.0")
 	if err != nil {
 		t.Fatalf("handleSessionStart: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestHandleSessionStart_Empty(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	data, err := handleSessionStart(base)
+	data, err := handleSessionStart(base, "v0.1.0")
 	if err != nil {
 		t.Fatalf("handleSessionStart: %v", err)
 	}
@@ -99,7 +99,10 @@ func TestHandleSessionStart_Empty(t *testing.T) {
 		t.Fatalf("Unmarshal: %v", err)
 	}
 
-	ctx := out.HookSpecificOutput["additionalContext"].(string)
+	ctx, ok := out.HookSpecificOutput["additionalContext"].(string)
+	if !ok {
+		t.Fatal("missing additionalContext in output")
+	}
 
 	// All categories should show (none).
 	for _, cat := range []string{"knowledge", "vision", "experience"} {
@@ -110,7 +113,7 @@ func TestHandleSessionStart_Empty(t *testing.T) {
 			continue
 		}
 		after := ctx[catIdx:]
-		if !strings.Contains(after[:50], "(none)") {
+		if !strings.Contains(after, "(none)") {
 			t.Errorf("category %s should show (none)", cat)
 		}
 	}

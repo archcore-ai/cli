@@ -133,7 +133,7 @@ func newInitCmd() *cobra.Command {
 				detected = []*agents.Agent{agents.ByID(agents.ClaudeCode)}
 			}
 			for _, agent := range detected {
-				if err := installHooksForAgent(cwd, agent); err != nil {
+				if _, err := installHooksForAgent(cwd, agent); err != nil {
 					fmt.Println(display.WarnLine(fmt.Sprintf("%s hooks: %v", agent.DisplayName, err)))
 				}
 				if err := installMCPForAgent(cwd, agent); err != nil {

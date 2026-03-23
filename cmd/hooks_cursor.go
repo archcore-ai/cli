@@ -35,13 +35,13 @@ var cursorHookEvents = []struct {
 	{"sessionStart", "archcore hooks cursor session-start"},
 }
 
-func newHooksCursorCmd() *cobra.Command {
+func newHooksCursorCmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cursor",
 		Short: "Handle Cursor hook events",
 	}
 	cmd.AddCommand(
-		newSessionStartHookCmd("session-start", "Handle Cursor SessionStart hook event"),
+		newSessionStartHookCmd("session-start", "Handle Cursor SessionStart hook event", version),
 	)
 	return cmd
 }
@@ -62,7 +62,7 @@ func runCursorHooksInstall(baseDir string) error {
 	var cfg cursorHooksConfig
 	data, err := os.ReadFile(hooksPath)
 	if err == nil {
-		if err := json.Unmarshal(data, &cfg); err != nil {
+		if unmarshalErr := json.Unmarshal(data, &cfg); unmarshalErr != nil {
 			_ = os.WriteFile(hooksPath+".bak", data, 0o644)
 			fmt.Println(display.WarnLine(fmt.Sprintf("Corrupted %s backed up, starting fresh", hooksPath)))
 			cfg = cursorHooksConfig{}

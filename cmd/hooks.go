@@ -36,17 +36,17 @@ var archcoreHooks = []struct {
 	{"SessionStart", hookMatcher{Matcher: "", Hooks: []hookEntry{{Type: "command", Command: "archcore hooks claude-code session-start"}}}},
 }
 
-func newHooksCmd() *cobra.Command {
+func newHooksCmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hooks",
 		Short: "Manage agent hooks integration",
 	}
 	cmd.AddCommand(
 		newHooksInstallCmd(),
-		newHooksClaudeCodeCmd(),
-		newHooksCursorCmd(),
-		newHooksGeminiCLICmd(),
-		newHooksCopilotCmd(),
+		newHooksClaudeCodeCmd(version),
+		newHooksCursorCmd(version),
+		newHooksGeminiCLICmd(version),
+		newHooksCopilotCmd(version),
 	)
 	return cmd
 }
@@ -87,13 +87,13 @@ var hooksInstallers = map[agents.AgentID]func(string) error{
 }
 
 // installHooksForAgent installs hooks for a single agent that supports them.
-// Returns nil if the agent doesn't support hooks.
-func installHooksForAgent(baseDir string, agent *agents.Agent) error {
+// Returns (false, nil) if the agent doesn't support hooks.
+func installHooksForAgent(baseDir string, agent *agents.Agent) (bool, error) {
 	installer, ok := hooksInstallers[agent.ID]
 	if !ok {
-		return nil
+		return false, nil
 	}
-	return installer(baseDir)
+	return true, installer(baseDir)
 }
 
 // runHooksInstallForAgent installs hooks for a specific agent by ID.
@@ -102,10 +102,11 @@ func runHooksInstallForAgent(baseDir string, id agents.AgentID) error {
 	if agent == nil {
 		return fmt.Errorf("unknown agent %q — valid agents: %v", id, agents.AllIDs())
 	}
-	if err := installHooksForAgent(baseDir, agent); err != nil {
+	installed, err := installHooksForAgent(baseDir, agent)
+	if err != nil {
 		return err
 	}
-	if _, ok := hooksInstallers[id]; !ok {
+	if !installed {
 		fmt.Println(display.WarnLine(fmt.Sprintf("%s does not support hooks", agent.DisplayName)))
 	}
 	return nil
@@ -120,7 +121,7 @@ func runHooksInstallAutoDetect(baseDir string) error {
 	}
 
 	for _, agent := range detected {
-		if err := installHooksForAgent(baseDir, agent); err != nil {
+		if _, err := installHooksForAgent(baseDir, agent); err != nil {
 			fmt.Println(display.WarnLine(fmt.Sprintf("%s hooks: %v", agent.DisplayName, err)))
 		}
 	}

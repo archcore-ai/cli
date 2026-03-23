@@ -63,11 +63,11 @@ func FormatExecuteError(err error) string {
 }
 
 func NewRootCmd(version string) *cobra.Command {
-	cleaned := cleanVersion(version)
+	ver := cleanVersion(version)
 	root := &cobra.Command{
 		Use:           "archcore",
 		Short:         "Archcore — System Context Platform",
-		Version:       cleaned,
+		Version:       ver,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -98,10 +98,10 @@ func NewRootCmd(version string) *cobra.Command {
 		newConfigCmd(),
 		newDoctorCmd(),
 		newValidateCmd(),
-		newHooksCmd(),
+		newHooksCmd(ver),
 		newMCPCmd(),
 		newSyncCmd(),
-		newUpdateCmd(cleaned),
+		newUpdateCmd(ver),
 	)
 
 	return root
