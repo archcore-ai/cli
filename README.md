@@ -180,18 +180,51 @@ Creates `notifications/notifications-implementation.plan.md`, then links it to t
 
 Archcore organizes context into 3 layers of knowledge: Vision, Knowledge, and Experience.
 
-| Type | Full Name | Category | Description |
-|------|-----------|----------|-------------|
-| `prd` | Product Requirements Document | Vision | Goals, user stories, acceptance criteria, and success metrics |
-| `idea` | Idea | Vision | Lightweight capture of a product or technical idea for future exploration |
-| `plan` | Plan | Vision | Phased task list with acceptance criteria and dependencies |
-| `adr` | Architecture Decision Record | Knowledge | Captures a finalized technical decision with context, alternatives, and consequences |
-| `rfc` | Request for Comments | Knowledge | Proposes a significant change open for team review and feedback |
-| `rule` | Rule | Knowledge | Coding or process standard with imperative guidance and examples |
-| `guide` | Guide | Knowledge | Step-by-step instructions for completing a specific task |
-| `doc` | Document | Knowledge | Reference documentation, registries, and descriptive material |
-| `task-type` | Task Type | Experience | Reusable checklist and workflow for a recurring task |
-| `cpat` | Code Change Pattern | Experience | Root-cause analysis of a bug or incident with prevention steps |
+### Vision
+
+| Type | Full Name | Description |
+|------|-----------|-------------|
+| `prd` | Product Requirements Document | Goals, user stories, acceptance criteria, and success metrics |
+| `idea` | Idea | Lightweight capture of a product or technical idea for future exploration |
+| `plan` | Plan | Phased task list with acceptance criteria and dependencies |
+
+Archcore also supports two additional requirements tracks for teams that need structured discovery or formal decomposition:
+
+**Sources track** (MRD → BRD → URD) — captures *where* requirements come from:
+
+| Type | Full Name | Description |
+|------|-----------|-------------|
+| `mrd` | Market Requirements Document | Market landscape, TAM/SAM/SOM, competitive analysis, and market needs |
+| `brd` | Business Requirements Document | Business objectives, stakeholders, ROI, and business rules |
+| `urd` | User Requirements Document | User personas, journeys, usability requirements, and acceptance criteria |
+
+**ISO/IEC/IEEE 29148:2018 track** (BRS → StRS → SyRS → SRS) — captures *how* requirements decompose:
+
+| Type | Full Name | Description |
+|------|-----------|-------------|
+| `brs` | Business Requirements Specification | Mission, goals, objectives, and business operational concept |
+| `strs` | Stakeholder Requirements Specification | Stakeholder needs, operational concept, and user requirements |
+| `syrs` | System Requirements Specification | System functions, interfaces, performance, and design constraints |
+| `srs` | Software Requirements Specification | Software functions, external interfaces, and detailed behavioral specs |
+
+Use PRD for most projects. Add the sources track when you need structured requirement discovery. Add ISO 29148 when you need formal traceability for regulated or complex multi-team systems. Mix freely — some features can use a PRD while others use the full cascade.
+### Knowledge
+
+| Type | Full Name | Description |
+|------|-----------|-------------|
+| `adr` | Architecture Decision Record | Captures a finalized technical decision with context, alternatives, and consequences |
+| `rfc` | Request for Comments | Proposes a significant change open for team review and feedback |
+| `rule` | Rule | Coding or process standard with imperative guidance and examples |
+| `guide` | Guide | Step-by-step instructions for completing a specific task |
+| `doc` | Document | Reference documentation, registries, and descriptive material |
+| `spec` | Specification | Canonical normative contract for a system, component, interface, or protocol |
+
+### Experience
+
+| Type | Full Name | Description |
+|------|-----------|-------------|
+| `task-type` | Task Type | Reusable checklist and workflow for a recurring task |
+| `cpat` | Code Change Pattern | Root-cause analysis of a bug or incident with prevention steps |
 
 Each document is a Markdown file with YAML frontmatter:
 
