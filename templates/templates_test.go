@@ -82,6 +82,26 @@ func TestGenerateTemplate(t *testing.T) {
 			wantContains: []string{"## User Personas", "## User Journeys", "## User Requirements", "## Usability Requirements", "## Acceptance Criteria"},
 		},
 		{
+			name:         "BRS template",
+			documentType: TypeBRS,
+			wantContains: []string{"## Business Purpose and Scope", "## Business Overview", "## Mission, Goals and Objectives", "## Business Model", "## Business Constraints", "## High-Level Operational Concept", "## Success Criteria", "## Assumptions and Dependencies", "## Traceability"},
+		},
+		{
+			name:         "StRS template",
+			documentType: TypeStRS,
+			wantContains: []string{"## Purpose and Scope", "## Stakeholder Classes", "## Operational Concept", "## Stakeholder Requirements", "## Operational Policies and Rules", "## Operational Constraints", "## Compliance and Regulatory", "## Project Constraints", "## Traceability"},
+		},
+		{
+			name:         "SyRS template",
+			documentType: TypeSyRS,
+			wantContains: []string{"## System Purpose and Scope", "## System Overview", "## System Requirements", "## System Interfaces", "## System Operations", "## Policy and Regulation", "## Life Cycle Sustainment", "## Verification Approach", "## Traceability"},
+		},
+		{
+			name:         "SRS template",
+			documentType: TypeSRS,
+			wantContains: []string{"## Purpose and Scope", "## Product Perspective", "## Software Requirements", "## External Interfaces", "## Data Requirements", "## Performance", "## Design Constraints", "## Software Quality Attributes", "## Verification Matrix", "## Traceability"},
+		},
+		{
 			name:         "Unknown type falls back to doc template",
 			documentType: DocumentType("unknown"),
 			wantContains: []string{"## Overview", "## Content", "## Examples", "## Related Resources"},
@@ -443,6 +463,26 @@ func TestTemplateStructure(t *testing.T) {
 			documentType: TypeURD,
 			minLength:    1500,
 		},
+		{
+			name:         "BRS has substantial content",
+			documentType: TypeBRS,
+			minLength:    2000,
+		},
+		{
+			name:         "StRS has substantial content",
+			documentType: TypeStRS,
+			minLength:    2000,
+		},
+		{
+			name:         "SyRS has substantial content",
+			documentType: TypeSyRS,
+			minLength:    2500,
+		},
+		{
+			name:         "SRS has substantial content",
+			documentType: TypeSRS,
+			minLength:    2500,
+		},
 	}
 
 	for _, tt := range tests {
@@ -457,11 +497,9 @@ func TestTemplateStructure(t *testing.T) {
 }
 
 func TestTemplateMarkdownFormatting(t *testing.T) {
-	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeSpec, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan, TypeMRD, TypeBRD, TypeURD}
-
-	for _, typ := range types {
-		t.Run(string(typ), func(t *testing.T) {
-			template := GenerateTemplate(typ)
+	for _, typ := range ValidTypes() {
+		t.Run(typ, func(t *testing.T) {
+			template := GenerateTemplate(DocumentType(typ))
 
 			if !strings.Contains(template, "##") {
 				t.Error("template should contain markdown headers (##)")

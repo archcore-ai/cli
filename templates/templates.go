@@ -25,6 +25,10 @@ const (
 	TypeMRD      DocumentType = "mrd"
 	TypeBRD      DocumentType = "brd"
 	TypeURD      DocumentType = "urd"
+	TypeBRS      DocumentType = "brs"
+	TypeStRS     DocumentType = "strs"
+	TypeSyRS     DocumentType = "syrs"
+	TypeSRS      DocumentType = "srs"
 )
 
 const (
@@ -67,6 +71,10 @@ var categoryMap = map[DocumentType]string{
 	TypeMRD:  CategoryVision,
 	TypeBRD:  CategoryVision,
 	TypeURD:  CategoryVision,
+	TypeBRS:  CategoryVision,
+	TypeStRS: CategoryVision,
+	TypeSyRS: CategoryVision,
+	TypeSRS:  CategoryVision,
 
 	TypeADR:     CategoryKnowledge,
 	TypeRFC:     CategoryKnowledge,
@@ -104,6 +112,10 @@ func ValidTypes() []string {
 		string(TypeMRD),
 		string(TypeBRD),
 		string(TypeURD),
+		string(TypeBRS),
+		string(TypeStRS),
+		string(TypeSyRS),
+		string(TypeSRS),
 	}
 }
 
@@ -240,6 +252,14 @@ func GenerateTemplate(documentType DocumentType) string {
 		return generateBRDTemplate()
 	case TypeURD:
 		return generateURDTemplate()
+	case TypeBRS:
+		return generateBRSTemplate()
+	case TypeStRS:
+		return generateStRSTemplate()
+	case TypeSyRS:
+		return generateSyRSTemplate()
+	case TypeSRS:
+		return generateSRSTemplate()
 	default:
 		return generateDocTemplate()
 	}
@@ -1567,6 +1587,470 @@ User-facing validation conditions:
 - User research data
 - Analytics and usage data
 - Related documents
+`
+}
+
+func generateBRSTemplate() string {
+	return `## Business Purpose and Scope
+
+### Purpose
+
+Why this business initiative exists — the business problem or opportunity being addressed.
+
+### Scope
+
+What is included and excluded from this business requirements specification.
+
+## Business Overview
+
+### Stakeholders
+
+| Stakeholder | Role | Interest | Impact |
+|-------------|------|----------|--------|
+| Stakeholder 1 | Sponsor / Owner / Advisor | Description | High/Med/Low |
+| Stakeholder 2 | Sponsor / Owner / Advisor | Description | High/Med/Low |
+
+### Business Environment
+
+- Market context and industry landscape
+- Regulatory and compliance landscape
+- Technology constraints and opportunities
+- Organizational context (capabilities, culture, structure)
+
+## Mission, Goals and Objectives
+
+| ID | Goal / Objective | Description | Priority | Success Measure |
+|----|------------------|-------------|----------|-----------------|
+| BG-001 | Goal 1 | Description | High/Med/Low | Measurable outcome |
+| BG-002 | Goal 2 | Description | High/Med/Low | Measurable outcome |
+| BO-001 | Objective 1 | Description | High/Med/Low | Measurable outcome |
+| BO-002 | Objective 2 | Description | High/Med/Low | Measurable outcome |
+
+## Business Model
+
+### Business Processes
+
+Key business processes affected or created by this initiative:
+
+1. Process 1: Description, current state, desired state
+2. Process 2: Description, current state, desired state
+
+### Business Policies and Rules
+
+| ID | Policy / Rule | Description | Source |
+|----|---------------|-------------|--------|
+| BP-001 | Policy 1 | Description | Regulatory / Internal / Industry |
+| BP-002 | Rule 1 | Description | Regulatory / Internal / Industry |
+
+## Business Constraints
+
+| Constraint | Type | Impact | Mitigation |
+|------------|------|--------|------------|
+| Constraint 1 | Budget / Timeline / Resource / Legal | Description | Strategy |
+| Constraint 2 | Budget / Timeline / Resource / Legal | Description | Strategy |
+
+## High-Level Operational Concept
+
+### Operational Scenarios
+
+Describe how the business will operate once the initiative is realized:
+
+1. Scenario 1: [Actor] does [action] to achieve [outcome]
+2. Scenario 2: [Actor] does [action] to achieve [outcome]
+
+### Operational Modes
+
+| Mode | Description | Conditions |
+|------|-------------|------------|
+| Normal | Standard business operations | Default |
+| Degraded | Reduced capability operations | Description of trigger |
+| Maintenance | Planned downtime or transition | Description of trigger |
+
+## Success Criteria
+
+| ID | Criterion | Metric | Target | Timeline |
+|----|-----------|--------|--------|----------|
+| SC-001 | Criterion 1 | Metric | Target value | Date |
+| SC-002 | Criterion 2 | Metric | Target value | Date |
+
+## Assumptions and Dependencies
+
+| ID | Type | Description | Risk if Invalid |
+|----|------|-------------|-----------------|
+| A-001 | Assumption | Description | Impact |
+| A-002 | Assumption | Description | Impact |
+| D-001 | Dependency | Description | Impact |
+| D-002 | Dependency | Description | Impact |
+
+## Traceability
+
+This BRS formalizes requirements from source documents via ` + "`implements`" + ` relation:
+
+- MRD: [link to market requirements document]
+- BRD: [link to business requirements document]
+
+| BRS Requirement | Source Document | Source Requirement |
+|-----------------|-----------------|---------------------|
+| BG-001 | MRD / BRD | Source ID or section |
+| BO-001 | MRD / BRD | Source ID or section |
+`
+}
+
+func generateStRSTemplate() string {
+	return `## Purpose and Scope
+
+What this stakeholder requirements specification covers — the system or initiative boundary from the stakeholder perspective.
+
+## Stakeholder Classes
+
+| Stakeholder Class | Description | Priority | Key Concerns |
+|-------------------|-------------|----------|--------------|
+| Class 1 | Description | Primary / Secondary | Concerns |
+| Class 2 | Description | Primary / Secondary | Concerns |
+
+## Operational Concept (ConOps)
+
+### Current Operations
+
+How stakeholders accomplish their goals today:
+
+1. Step 1: What happens, pain points
+2. Step 2: What happens, pain points
+3. Step 3: What happens, pain points
+
+### Proposed Operations
+
+How stakeholders should accomplish their goals:
+
+1. Step 1: What happens, improvement over current
+2. Step 2: What happens, improvement over current
+3. Step 3: What happens, improvement over current
+
+### Operational Scenarios
+
+| ID | Scenario | Stakeholder Class | Trigger | Expected Outcome |
+|----|----------|-------------------|---------|------------------|
+| OS-001 | Scenario 1 | Class | Event or condition | Outcome |
+| OS-002 | Scenario 2 | Class | Event or condition | Outcome |
+
+## Stakeholder Requirements
+
+### User Requirements
+
+| ID | Requirement | Stakeholder Class | Priority | Rationale |
+|----|-------------|-------------------|----------|-----------|
+| SR-001 | Description | Class | P0/P1/P2 | Why this matters |
+| SR-002 | Description | Class | P0/P1/P2 | Why this matters |
+
+### Usability Requirements
+
+- Accessibility standard (e.g., WCAG 2.1 AA)
+- Learnability: time to first productive use
+- Efficiency: task completion time targets
+- Error tolerance: acceptable error rates
+
+### Quality Requirements
+
+| Attribute | Requirement | Metric | Target |
+|-----------|-------------|--------|--------|
+| Performance | Description | Metric | Value |
+| Reliability | Description | Metric | Value |
+| Availability | Description | Metric | Value |
+
+## Operational Policies and Rules
+
+| ID | Policy / Rule | Description | Source |
+|----|---------------|-------------|--------|
+| OP-001 | Policy 1 | Description | Regulatory / Organizational |
+| OP-002 | Rule 1 | Description | Regulatory / Organizational |
+
+## Operational Constraints
+
+### Modes and States
+
+| Mode / State | Description | Stakeholder Impact | Transitions |
+|--------------|-------------|--------------------|-------------|
+| Normal | Standard operations | Full capability | Default |
+| Degraded | Reduced service | Limited capability | Trigger condition |
+| Maintenance | Planned outage | No service | Scheduled |
+
+## Compliance and Regulatory
+
+| Regulation / Standard | Requirement | Applicable Section | Compliance Approach |
+|-----------------------|-------------|---------------------|---------------------|
+| Regulation 1 | Description | Section | Approach |
+| Standard 1 | Description | Section | Approach |
+
+## Project Constraints
+
+- Schedule: Key milestones and deadlines
+- Budget: Funding limits and allocation
+- Technology: Platform, language, infrastructure constraints
+- Organizational: Team capacity, skills, processes
+
+## Traceability
+
+This StRS formalizes stakeholder requirements from source documents via ` + "`implements`" + ` relation:
+
+- URD: [link to user requirements document]
+- BRS: [link to business requirements specification]
+
+| StRS Requirement | Source Document | Source Requirement |
+|------------------|-----------------|---------------------|
+| SR-001 | URD / BRS | Source ID or section |
+| SR-002 | URD / BRS | Source ID or section |
+`
+}
+
+func generateSyRSTemplate() string {
+	return `## System Purpose and Scope
+
+What the system does and why it exists.
+
+### System Boundary
+
+What is inside vs. outside the system:
+
+- Inside: Components, services, and capabilities owned by this system
+- Outside: External systems, users, and services the system interacts with
+
+## System Overview
+
+High-level description of the system architecture — major components, data flows, and deployment topology.
+
+## System Requirements
+
+### Functional Requirements
+
+| ID | Requirement | Description | Priority | Verification Method |
+|----|-------------|-------------|----------|---------------------|
+| SyR-F-001 | Requirement 1 | Description | P0/P1/P2 | Test / Inspection / Analysis / Demo |
+| SyR-F-002 | Requirement 2 | Description | P0/P1/P2 | Test / Inspection / Analysis / Demo |
+
+### Usability Requirements
+
+| ID | Requirement | Target | Verification Method |
+|----|-------------|--------|---------------------|
+| SyR-U-001 | Requirement 1 | Target value | Method |
+| SyR-U-002 | Requirement 2 | Target value | Method |
+
+### Performance Requirements
+
+| ID | Requirement | Metric | Target | Verification Method |
+|----|-------------|--------|--------|---------------------|
+| SyR-P-001 | Throughput | req/s | Value | Load test |
+| SyR-P-002 | Latency | ms (P95) | Value | Load test |
+| SyR-P-003 | Resource usage | CPU/Memory | Value | Monitoring |
+
+### Security Requirements
+
+| ID | Requirement | Description | Verification Method |
+|----|-------------|-------------|---------------------|
+| SyR-S-001 | Requirement 1 | Description | Pen test / Audit / Review |
+| SyR-S-002 | Requirement 2 | Description | Pen test / Audit / Review |
+
+### Reliability Requirements
+
+| ID | Requirement | Metric | Target | Verification Method |
+|----|-------------|--------|--------|---------------------|
+| SyR-R-001 | Availability | Uptime % | Value | Monitoring |
+| SyR-R-002 | MTTR | Hours | Value | Incident review |
+| SyR-R-003 | Data durability | RPO/RTO | Value | DR test |
+
+## System Interfaces
+
+### User Interfaces
+
+| Interface | Description | Format / Protocol |
+|-----------|-------------|-------------------|
+| UI 1 | Description | Web / Mobile / CLI |
+| UI 2 | Description | Web / Mobile / CLI |
+
+### System-to-System Interfaces
+
+| Interface | External System | Direction | Protocol | Data Format |
+|-----------|-----------------|-----------|----------|-------------|
+| Interface 1 | System name | In / Out / Bidirectional | REST / gRPC / Event | JSON / Protobuf |
+| Interface 2 | System name | In / Out / Bidirectional | REST / gRPC / Event | JSON / Protobuf |
+
+### Hardware Interfaces
+
+If applicable — physical devices, sensors, actuators.
+
+## System Operations
+
+### Modes and States
+
+| Mode / State | Description | Transitions | Behavior |
+|--------------|-------------|-------------|----------|
+| Normal | Full system operation | Default | All features available |
+| Degraded | Partial capability | Trigger: failure condition | Graceful degradation strategy |
+| Maintenance | Planned downtime | Trigger: operator command | Controlled shutdown/startup |
+
+### Physical and Environmental
+
+- Operating conditions (temperature, network, power)
+- Physical deployment constraints
+- Geographic distribution requirements
+
+## Policy and Regulation
+
+- Applicable industry standards and regulations
+- Certification requirements
+- Data residency and sovereignty constraints
+
+## Life Cycle Sustainment
+
+- Maintenance strategy and schedule
+- Support tiers and SLA targets
+- Evolution and extensibility approach
+- End-of-life considerations
+
+## Verification Approach
+
+| Requirement ID | Verification Method | Acceptance Criteria |
+|----------------|---------------------|---------------------|
+| SyR-F-001 | Test / Inspection / Analysis / Demo | Criteria |
+| SyR-P-001 | Load test | Criteria |
+| SyR-S-001 | Penetration test | Criteria |
+
+## Traceability
+
+This SyRS decomposes requirements from upstream specifications via ` + "`implements`" + ` relation:
+
+- BRS: [link to business requirements specification]
+- StRS: [link to stakeholder requirements specification]
+
+| SyRS Requirement | Source Document | Source Requirement |
+|------------------|-----------------|---------------------|
+| SyR-F-001 | BRS / StRS | Source ID or section |
+| SyR-P-001 | StRS | Source ID or section |
+`
+}
+
+func generateSRSTemplate() string {
+	return `## Purpose and Scope
+
+### Component
+
+Which software component, service, or module this SRS covers.
+
+### Boundaries
+
+What is in scope vs. delegated to other components or services.
+
+## Product Perspective
+
+### Functions
+
+High-level summary of the software functions provided by this component.
+
+### User Characteristics
+
+Expected users of this component — their roles, skills, and interaction patterns.
+
+### Limitations
+
+Known constraints and design boundaries for this component.
+
+## Software Requirements
+
+### Functional Requirements
+
+| ID | Requirement | Input | Processing | Output | Priority |
+|----|-------------|-------|------------|--------|----------|
+| SR-F-001 | Requirement 1 | Input description | Processing logic | Output description | P0/P1/P2 |
+| SR-F-002 | Requirement 2 | Input description | Processing logic | Output description | P0/P1/P2 |
+
+### Behavioral Requirements
+
+State machines, workflows, or sequences that define component behavior:
+
+1. State/workflow 1: Description of transitions and triggers
+2. State/workflow 2: Description of transitions and triggers
+
+### Error Handling
+
+| Error Condition | Detection | Response | Recovery |
+|-----------------|-----------|----------|----------|
+| Error 1 | How detected | System response | Recovery steps |
+| Error 2 | How detected | System response | Recovery steps |
+
+## External Interfaces
+
+### API Endpoints
+
+| Method | Path | Description | Request | Response | Auth |
+|--------|------|-------------|---------|----------|------|
+| GET | /api/v1/resource | Description | Params | 200: Schema | Bearer / API key |
+| POST | /api/v1/resource | Description | Body schema | 201: Schema | Bearer / API key |
+
+### Internal Interfaces
+
+Interfaces to other internal components or services:
+
+| Interface | Target Component | Direction | Contract |
+|-----------|-----------------|-----------|----------|
+| Interface 1 | Component name | In / Out | Function signature / Event schema |
+| Interface 2 | Component name | In / Out | Function signature / Event schema |
+
+## Data Requirements
+
+### Logical Database
+
+Key entities and their relationships:
+
+| Entity | Description | Key Attributes | Relationships |
+|--------|-------------|----------------|---------------|
+| Entity 1 | Description | Attributes | Relations |
+| Entity 2 | Description | Attributes | Relations |
+
+### Data Flows
+
+How data moves through the component — input sources, transformations, output destinations.
+
+## Performance
+
+| Metric | Requirement | Measurement Method | Target |
+|--------|-------------|-------------------|--------|
+| Response time | P95 latency | Load test | Value |
+| Throughput | Requests/sec | Load test | Value |
+| Memory | Peak usage | Profiling | Value |
+
+## Design Constraints
+
+### Standards Compliance
+
+- Coding standards and conventions
+- Framework and library constraints
+- Protocol compliance requirements
+
+## Software Quality Attributes
+
+| Attribute | Requirement | Metric | Target |
+|-----------|-------------|--------|--------|
+| Maintainability | Description | Metric | Value |
+| Testability | Description | Coverage % | Value |
+| Portability | Description | Metric | Value |
+| Scalability | Description | Metric | Value |
+
+## Verification Matrix
+
+| Requirement ID | Test Type | Test Description | Pass Criteria |
+|----------------|-----------|------------------|---------------|
+| SR-F-001 | Unit / Integration / E2E | Description | Criteria |
+| SR-F-002 | Unit / Integration / E2E | Description | Criteria |
+
+## Traceability
+
+This SRS decomposes requirements from the system requirements specification via ` + "`implements`" + ` relation:
+
+- SyRS: [link to system requirements specification]
+
+| SRS Requirement | Source Document | Source Requirement |
+|-----------------|-----------------|---------------------|
+| SR-F-001 | SyRS | Source ID or section |
+| SR-F-002 | SyRS | Source ID or section |
 `
 }
 

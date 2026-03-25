@@ -55,6 +55,14 @@ Document types and when to use each:
                 § required sections: Business Objectives, Stakeholders, Business Rules and Constraints, Success Metrics and ROI, Dependencies
   urd       — User needs with personas, journeys, and usability requirements
                 § required sections: User Personas, User Journeys, User Requirements, Usability Requirements, Acceptance Criteria
+  brs       — Business requirements specification (ISO 29148 §9.3): formalized business-level requirements
+                § required sections: Business Purpose and Scope, Business Overview, Mission/Goals/Objectives, Business Model, Business Constraints, High-Level Operational Concept, Success Criteria, Assumptions/Dependencies, Traceability
+  strs      — Stakeholder requirements specification (ISO 29148 §9.4): formalized stakeholder-level requirements
+                § required sections: Purpose and Scope, Stakeholder Classes, Operational Concept (ConOps), Stakeholder Requirements, Operational Policies/Rules, Operational Constraints, Compliance/Regulatory, Project Constraints, Traceability
+  syrs      — System requirements specification (ISO 29148 §9.5): formalized system-level requirements
+                § required sections: System Purpose and Scope, System Overview, System Requirements, System Interfaces, System Operations, Policy/Regulation, Life Cycle Sustainment, Verification Approach, Traceability
+  srs       — Software requirements specification (ISO 29148 §9.6): formalized software component requirements
+                § required sections: Purpose and Scope, Product Perspective, Software Requirements, External Interfaces, Data Requirements, Performance, Design Constraints, Software Quality Attributes, Verification Matrix, Traceability
 
 TYPE DISAMBIGUATION:
 - rule vs doc: rule prescribes behavior ("Always do X") with good/bad examples and enforcement. doc describes what exists (tables, registries, explanations). Descriptive content → doc.
@@ -68,6 +76,14 @@ TYPE DISAMBIGUATION:
 - urd vs prd: urd captures user needs via PERSONAS and JOURNEYS (discovery). prd defines product requirements with acceptance criteria (specification).
 - mrd vs brd: mrd is MARKET ANALYSIS (external — industry, competitors, TAM). brd is BUSINESS JUSTIFICATION (internal — ROI, stakeholders, budget).
 - brd vs urd: brd captures ORGANIZATIONAL needs (goals, budget, regulations). urd captures END-USER needs (personas, journeys, usability).
+- brs vs prd: brs has ONLY business objectives with ISO structure (mission, operational concept, success criteria), no user stories or solution. prd has user stories, functional requirements, solution overview.
+- strs vs prd: strs groups requirements PER STAKEHOLDER CLASS with ConOps (operational scenarios). prd lists requirements by priority (P0/P1/P2).
+- syrs vs adr: syrs defines WHOLE SYSTEM BOUNDARY with interface contracts and verification approach. adr records a single architectural decision.
+- srs vs prd: srs has PER-ENDPOINT/PER-FUNCTION requirements with verification matrix. prd has product-level requirements.
+- brs vs strs: brs = WHY (business outcomes, technology-agnostic mission/goals). strs = WHAT stakeholders need (operational scenarios, solution-aware, per-class).
+- syrs vs srs: syrs = WHOLE SYSTEM boundary, all interfaces and modes. srs = SINGLE COMPONENT's detailed behavior, one software module.
+- brs vs brd: brs is a FORMAL ISO SPECIFICATION (mission, goals, operational concept, success criteria). brd is an INFORMAL SOURCE (business justification: ROI, budget, stakeholders). brs formalizes what brd captures informally.
+- strs vs urd: strs is a FORMAL ISO SPECIFICATION (per-stakeholder-class requirements with ConOps). urd is an INFORMAL SOURCE (personas, journeys, usability). strs formalizes what urd captures informally.
 
 Returns: JSON with path, type, category, title, status, and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
 		mcp.WithString("type",
@@ -166,11 +182,12 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 
 		outputFile := filepath.Join(dir, filename+"."+docType+".md")
 
-		relPath, err := filepath.Rel(baseDir, outputFile)
-		if err != nil {
-			relPath = filepath.ToSlash(outputFile)
+		var relPath string
+		if directory != "" {
+			relPath = ".archcore/" + directory + "/" + filename + "." + docType + ".md"
+		} else {
+			relPath = ".archcore/" + filename + "." + docType + ".md"
 		}
-		relPath = filepath.ToSlash(relPath)
 
 		if _, err := os.Stat(outputFile); err == nil {
 			return errorResult(fmt.Sprintf("file already exists: %s", relPath)), nil
@@ -238,10 +255,10 @@ func addNearbyRelations(baseDir, relPath string, result map[string]any) {
 		return
 	}
 	// relPath is ".archcore/dir/file.md", normalize to "dir/file.md"
-	newDocRel := strings.TrimPrefix(relPath, ".archcore/")
+	newDocRel := normalizeRelPath(relPath)
 	var added []string
 	for _, np := range nearby {
-		nearbyRel := strings.TrimPrefix(np, ".archcore/")
+		nearbyRel := normalizeRelPath(np)
 		if m.AddRelation(newDocRel, nearbyRel, sync.RelRelated) {
 			added = append(added, np)
 		}

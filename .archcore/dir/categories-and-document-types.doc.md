@@ -29,9 +29,25 @@ Documents that describe the future: what we want to build and why.
 
 The sources track captures **where** requirements come from (market → business → users). Documents flow naturally: MRD (market landscape) → BRD (business justification) → URD (user needs).
 
-### How Sources Relate to Other Tracks
+### ISO Track (Decomposition)
 
-Sources feed into ISO types via `implements` relation:
+| Type   | ISO Reference | Purpose                                                                                      |
+| ------ | ------------- | -------------------------------------------------------------------------------------------- |
+| `brs`  | ISO §9.3      | Business requirements specification — mission, goals, operational concept, success criteria   |
+| `strs` | ISO §9.4      | Stakeholder requirements specification — per-class requirements with ConOps, compliance       |
+| `syrs` | ISO §9.5      | System requirements specification — system boundary, interfaces, modes, verification approach |
+| `srs`  | ISO §9.6      | Software requirements specification — per-function/per-endpoint specs, verification matrix    |
+
+The ISO track decomposes requirements through progressively detailed levels: BRS (why the business needs it) → StRS (what stakeholders need) → SyRS (how the system behaves) → SRS (how the software works).
+
+### Requirements Layers — Sources vs Specifications
+
+Sources and Specifications are **separate layers**:
+
+- **Layer A (Sources):** mrd, brd, urd, prd — capture raw requirements from market, business, and user perspectives
+- **Layer B (Specifications):** brs, strs, syrs, srs — formalize requirements into ISO-structured specifications
+
+Sources **feed into** specifications via `implements` relation:
 
 | Source Type | Feeds Into (ISO) | Relationship |
 |-------------|-------------------|--------------|
@@ -39,6 +55,8 @@ Sources feed into ISO types via `implements` relation:
 | BRD (business objectives) | BRS / StRS (business + stakeholder formalization) | Business goals decompose into formal business and stakeholder requirements |
 | URD (user needs) | StRS (stakeholder requirements) | User needs become formal stakeholder requirements with ConOps |
 | PRD (condensed) | ≈ all four ISO types | PRD is a pragmatic hybrid covering all levels |
+
+Do NOT confuse source documents (mrd/brd/urd) with specification documents (brs/strs/syrs/srs). Sources are informal, discovery-oriented. Specifications are formal, ISO-structured.
 
 ## Knowledge
 
@@ -77,6 +95,14 @@ Documents that encode proven patterns and lessons from practice.
 - **urd vs prd** — URD captures user needs via PERSONAS and JOURNEYS (discovery-oriented). PRD defines product requirements with acceptance criteria (specification-oriented).
 - **mrd vs brd** — MRD is MARKET ANALYSIS (external-facing — industry, competitors, TAM). BRD is BUSINESS JUSTIFICATION (internal-facing — ROI, stakeholders, budget).
 - **brd vs urd** — BRD captures ORGANIZATIONAL needs (goals, budget, regulations). URD captures END-USER needs (personas, journeys, usability).
+- **brs vs prd** — BRS has ONLY business objectives with ISO structure (mission, operational concept, success criteria), no user stories. PRD has user stories, requirements by priority, solution overview.
+- **strs vs prd** — StRS groups requirements PER STAKEHOLDER CLASS with ConOps. PRD lists by priority (P0/P1/P2).
+- **syrs vs adr** — SyRS defines WHOLE SYSTEM BOUNDARY with interface contracts and verification. ADR records a single decision.
+- **srs vs prd** — SRS has PER-ENDPOINT/PER-FUNCTION requirements with verification matrix. PRD has product-level requirements.
+- **brs vs strs** — BRS = WHY (business outcomes, technology-agnostic). StRS = WHAT stakeholders need (operational scenarios, solution-aware).
+- **syrs vs srs** — SyRS = WHOLE SYSTEM boundary. SRS = SINGLE COMPONENT's detailed behavior.
+- **brs vs brd** — BRS is ISO SPECIFICATION (formalized structure). BRD is INFORMAL SOURCE (business justification, ROI). BRS formalizes what BRD captures informally.
+- **strs vs urd** — StRS is ISO SPECIFICATION (per-class requirements with ConOps). URD is INFORMAL SOURCE (personas, journeys). StRS formalizes what URD captures informally.
 
 ## Choosing the Right Requirements Track
 

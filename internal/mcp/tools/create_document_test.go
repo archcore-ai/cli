@@ -270,6 +270,10 @@ func TestHandleCreateDocument_AllTypes(t *testing.T) {
 		{"mrd", "vision", "## Market Landscape"},
 		{"brd", "vision", "## Business Objectives"},
 		{"urd", "vision", "## User Personas"},
+		{"brs", "vision", "## Business Purpose and Scope"},
+		{"strs", "vision", "## Stakeholder Classes"},
+		{"syrs", "vision", "## System Purpose and Scope"},
+		{"srs", "vision", "## Software Requirements"},
 	}
 
 	for _, tt := range types {

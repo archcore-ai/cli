@@ -21,7 +21,7 @@ Example structures:
 
 Document types and their virtual categories:
   knowledge: adr (decisions), rfc (proposals), rule (standards), guide (how-tos), doc (reference), spec (contracts)
-  vision:    prd (requirements), idea (concepts), plan (action plans), mrd (market requirements), brd (business requirements), urd (user requirements)
+  vision:    prd (requirements), idea (concepts), plan (action plans), mrd (market requirements), brd (business requirements), urd (user requirements), brs (business req spec), strs (stakeholder req spec), syrs (system req spec), srs (software req spec)
   experience: task-type (typical task patterns), cpat (code pattern changes)
 
 DOCUMENT RELATIONS:
@@ -61,6 +61,10 @@ WHEN TO CREATE:
 - Market analysis with TAM/SAM/SOM, competitive landscape, and market needs → mrd
 - Business justification with objectives, ROI, stakeholders, and budget → brd
 - User needs with personas, journeys, and usability requirements → urd
+- Business requirements formalized into ISO structure with mission, goals, operational concept, and success criteria → brs
+- Stakeholder requirements formalized per stakeholder class with ConOps and compliance → strs
+- System-level requirements with full boundary definition, interfaces, modes, and verification approach → syrs
+- Software component requirements with per-endpoint/per-function specs and verification matrix → srs
 
 WHEN TO UPDATE (use update_document):
 - A decision is finalized → change status from "draft" to "accepted"
@@ -86,13 +90,34 @@ TYPE SELECTION RULES (use these to disambiguate):
 - urd vs prd: URD captures user needs via PERSONAS and JOURNEYS (discovery-oriented). PRD defines product requirements with acceptance criteria (specification-oriented).
 - mrd vs brd: MRD is MARKET ANALYSIS (external-facing — industry, competitors, TAM). BRD is BUSINESS JUSTIFICATION (internal-facing — ROI, stakeholders, budget).
 - brd vs urd: BRD captures ORGANIZATIONAL needs (goals, budget, regulations). URD captures END-USER needs (personas, journeys, usability).
+- brs vs prd: BRS has ONLY business objectives with ISO structure (mission, operational concept, success criteria), no user stories or solution. PRD has user stories, functional requirements, solution overview.
+- strs vs prd: StRS groups requirements PER STAKEHOLDER CLASS with ConOps (operational scenarios). PRD lists requirements by priority (P0/P1/P2).
+- syrs vs adr: SyRS defines WHOLE SYSTEM BOUNDARY with interface contracts and verification approach. ADR records a single architectural decision.
+- srs vs prd: SRS has PER-ENDPOINT/PER-FUNCTION requirements with verification matrix. PRD has product-level requirements.
+- brs vs strs: BRS = WHY (business outcomes, technology-agnostic mission/goals). StRS = WHAT stakeholders need (operational scenarios, solution-aware, per-class).
+- syrs vs srs: SyRS = WHOLE SYSTEM boundary, all interfaces and modes. SRS = SINGLE COMPONENT's detailed behavior, one software module.
+- brs vs brd: BRS is a FORMAL ISO SPECIFICATION (mission, goals, operational concept, success criteria). BRD is an INFORMAL SOURCE (business justification: ROI, budget, stakeholders). BRS formalizes what BRD captures informally.
+- strs vs urd: StRS is a FORMAL ISO SPECIFICATION (per-stakeholder-class requirements with ConOps). URD is an INFORMAL SOURCE (personas, journeys, usability). StRS formalizes what URD captures informally.
 
 REQUIREMENTS TRACKS:
 Three approaches to requirements engineering, choose based on project complexity:
   Product track (simple):  prd — single document covering vision, requirements, and solution. Best for small teams, internal tools, rapid prototyping.
   Sources track (discovery): mrd → brd → urd — captures where requirements come from (market, business, users). Best for product teams doing discovery, stakeholder alignment.
-  ISO track (decomposition): brs → strs → syrs → srs — formal requirements cascade. Best for regulated systems, multi-team projects.
-Sources feed into ISO types via "implements" relation (e.g., mrd implements brs, urd implements strs). All tracks can coexist — use what fits the project.
+  ISO track (decomposition): brs → strs → syrs → srs — formal requirements cascade per ISO 29148. Best for regulated systems, multi-team projects.
+All tracks can coexist — use what fits the project.
+
+REQUIREMENTS LAYERS — Sources and Specifications are SEPARATE layers:
+  Layer A (Sources):        mrd, brd, urd, prd — capture raw requirements from market, business, and user perspectives
+  Layer B (Specifications): brs, strs, syrs, srs — formalize requirements into ISO-structured specifications
+  Sources FEED INTO specifications via "implements" relation:
+    mrd → brs  (market requirements formalize into business requirements specification)
+    brd → brs  (business objectives formalize into business requirements specification)
+    brd → strs (business stakeholder needs formalize into stakeholder requirements specification)
+    urd → strs (user needs formalize into stakeholder requirements specification)
+  Within ISO cascade, each level feeds the next via "implements" relation:
+    brs → strs → syrs → srs
+  PRD can substitute for the entire ISO cascade (use "related" relation to link PRD to ISO types).
+  Do NOT confuse source documents (mrd/brd/urd) with specification documents (brs/strs/syrs/srs). Sources are informal, discovery-oriented. Specifications are formal, ISO-structured.
 
 VALID STATUS VALUES:
   draft     — default for new documents; work in progress

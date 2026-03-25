@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"archcore-cli/internal/sync"
@@ -25,6 +26,12 @@ Relation types:
   implements  — source implements what target specifies (e.g., plan implements prd)
   extends     — source builds upon target (e.g., rfc extends an existing adr)
   depends_on  — source requires target to proceed (e.g., plan depends_on adr)
+
+REQUIREMENTS LAYER HINTS (soft guidance — not enforced):
+  Sources → Specifications: use "implements" (e.g., brd implements brs, urd implements strs)
+  Within ISO cascade: use "implements" (e.g., strs implements brs, syrs implements strs, srs implements syrs)
+  Within same layer: use "related" (e.g., mrd related brd, brs related strs)
+  PRD to ISO types: use "related" (PRD is an alternative path)
 
 Both source and target must be existing documents. Paths can be given with or without the ".archcore/" prefix.`),
 		mcp.WithString("source",
@@ -106,7 +113,10 @@ func HandleAddRelation(baseDir string) func(ctx context.Context, request mcp.Cal
 			"type":   relType,
 			"added":  added,
 		}
-		data, _ := json.Marshal(result)
+		data, err := json.Marshal(result)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling result: %w", err)
+		}
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{mcp.NewTextContent(string(data))},
 		}, nil

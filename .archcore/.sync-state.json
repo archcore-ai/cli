@@ -247,6 +247,11 @@
       "source": "document-types/remove-project-document-type.adr.md",
       "target": "dir/categories-and-document-types.doc.md",
       "type": "related"
+    },
+    {
+      "source": "marketing/context-engineering-market.mrd.md",
+      "target": "marketing/marketing-overview.doc.md",
+      "type": "related"
     }
   ]
 }
