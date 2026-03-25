@@ -28,9 +28,9 @@ Relation types:
   depends_on  — source requires target to proceed (e.g., plan depends_on adr)
 
 REQUIREMENTS LAYER HINTS (soft guidance — not enforced):
-  Sources → Specifications: use "implements" (e.g., brd implements brs, urd implements strs)
+  Specifications formalizing Sources: use "implements" with spec as source (e.g., brs implements brd, strs implements urd)
   Within ISO cascade: use "implements" (e.g., strs implements brs, syrs implements strs, srs implements syrs)
-  Within same layer: use "related" (e.g., mrd related brd, brs related strs)
+  Same-layer peers: use "related" (e.g., mrd related brd, brd related urd)
   PRD to ISO types: use "related" (PRD is an alternative path)
 
 Both source and target must be existing documents. Paths can be given with or without the ".archcore/" prefix.`),

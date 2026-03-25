@@ -252,6 +252,166 @@
       "source": "marketing/context-engineering-market.mrd.md",
       "target": "marketing/marketing-overview.doc.md",
       "type": "related"
+    },
+    {
+      "source": "cli/mcp-token-optimization.idea.md",
+      "target": "cli/archcore-first-search-priority.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/mcp-token-optimization.idea.md",
+      "target": "cli/dependency-vulnerability-remediation.task-type.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/mcp-token-optimization.idea.md",
+      "target": "cli/feature-gating-at-command-layer.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/mcp-token-optimization.idea.md",
+      "target": "cli/import-existing-context.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "cli/mcp-token-optimization.idea.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/remove-project-document-type.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/spec-type-usage.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "document-types/writing-spec-documents.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/remove-project-document-type.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/source-to-specification-relations.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/spec-type-usage.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "document-types/writing-spec-documents.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/iso-29148-document-types-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/mrd-brd-urd-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/mrd-brd-urd-requirement-sources.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/prd-vs-iso-29148-requirements-strategy.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/remove-project-document-type.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/source-to-specification-relations.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/sources-are-not-specifications.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/spec-type-usage.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "document-types/writing-spec-documents.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/working-with-requirements-tracks.guide.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/source-to-specification-relations.rule.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
+    },
+    {
+      "source": "document-types/sources-are-not-specifications.rule.md",
+      "target": "dir/categories-and-document-types.doc.md",
+      "type": "related"
     }
   ]
 }

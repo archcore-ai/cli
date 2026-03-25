@@ -47,14 +47,15 @@ Sources and Specifications are **separate layers**:
 - **Layer A (Sources):** mrd, brd, urd, prd — capture raw requirements from market, business, and user perspectives
 - **Layer B (Specifications):** brs, strs, syrs, srs — formalize requirements into ISO-structured specifications
 
-Sources **feed into** specifications via `implements` relation:
+Specifications formalize sources via `implements` relation (spec is the source, source doc is the target):
 
-| Source Type | Feeds Into (ISO) | Relationship |
-|-------------|-------------------|--------------|
-| MRD (market needs) | BRS (business formalization) | Market requirements get formalized as business requirements |
-| BRD (business objectives) | BRS / StRS (business + stakeholder formalization) | Business goals decompose into formal business and stakeholder requirements |
-| URD (user needs) | StRS (stakeholder requirements) | User needs become formal stakeholder requirements with ConOps |
-| PRD (condensed) | ≈ all four ISO types | PRD is a pragmatic hybrid covering all levels |
+| Specification | Formalizes | Relation Example |
+|---------------|------------|------------------|
+| BRS | MRD (market needs), BRD (business objectives) | `brs implements mrd`, `brs implements brd` |
+| StRS | URD (user needs), BRS (ISO cascade) | `strs implements urd`, `strs implements brs` |
+| SyRS | StRS (ISO cascade) | `syrs implements strs` |
+| SRS | SyRS (ISO cascade) | `srs implements syrs` |
+| PRD | ≈ all four ISO types (use `related`) | PRD is a pragmatic hybrid covering all levels |
 
 Do NOT confuse source documents (mrd/brd/urd) with specification documents (brs/strs/syrs/srs). Sources are informal, discovery-oriented. Specifications are formal, ISO-structured.
 

@@ -84,22 +84,22 @@ func TestGenerateTemplate(t *testing.T) {
 		{
 			name:         "BRS template",
 			documentType: TypeBRS,
-			wantContains: []string{"## Business Purpose and Scope", "## Business Overview", "## Mission, Goals and Objectives", "## Business Model", "## Business Constraints", "## High-Level Operational Concept", "## Success Criteria", "## Assumptions and Dependencies", "## Traceability"},
+			wantContains: []string{"## Business Purpose and Scope", "## Business Overview", "### Information Environment", "## Mission, Goals and Objectives", "## Business Operations", "## Business Constraints", "## High-Level Operational Concept", "### Business Operational Quality", "## Project Constraints", "## Success Criteria", "## Assumptions and Dependencies", "## Traceability"},
 		},
 		{
 			name:         "StRS template",
 			documentType: TypeStRS,
-			wantContains: []string{"## Purpose and Scope", "## Stakeholder Classes", "## Operational Concept", "## Stakeholder Requirements", "## Operational Policies and Rules", "## Operational Constraints", "## Compliance and Regulatory", "## Project Constraints", "## Traceability"},
+			wantContains: []string{"## Purpose and Scope", "## System Overview", "## Business Context", "## Stakeholder Classes", "## Operational Concept", "## Stakeholder Requirements", "## System Processes", "## Operational Policies and Rules", "## Operational Constraints", "## Compliance and Regulatory", "## Project Constraints", "## Traceability"},
 		},
 		{
 			name:         "SyRS template",
 			documentType: TypeSyRS,
-			wantContains: []string{"## System Purpose and Scope", "## System Overview", "## System Requirements", "## System Interfaces", "## System Operations", "## Policy and Regulation", "## Life Cycle Sustainment", "## Verification Approach", "## Traceability"},
+			wantContains: []string{"## System Purpose and Scope", "## System Overview", "## System Requirements", "### Information Management Requirements", "## System Interfaces", "## System Operations", "## Policy and Regulation", "## Life Cycle Sustainment", "## Assumptions and Dependencies", "## Verification Approach", "## Traceability"},
 		},
 		{
 			name:         "SRS template",
 			documentType: TypeSRS,
-			wantContains: []string{"## Purpose and Scope", "## Product Perspective", "## Software Requirements", "## External Interfaces", "## Data Requirements", "## Performance", "## Design Constraints", "## Software Quality Attributes", "## Verification Matrix", "## Traceability"},
+			wantContains: []string{"## Purpose and Scope", "## Product Perspective", "### Assumptions and Dependencies", "## Software Requirements", "## External Interfaces", "## Data Requirements", "## Usability Requirements", "## Performance", "## Design Constraints", "## Software Quality Attributes", "## Verification Matrix", "## Traceability"},
 		},
 		{
 			name:         "Unknown type falls back to doc template",

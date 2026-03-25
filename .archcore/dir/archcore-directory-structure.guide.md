@@ -1,5 +1,5 @@
 ---
-title: Organizing Your .archcore/ Directory
+title: "Organizing Your .archcore/ Directory"
 status: accepted
 ---
 
@@ -35,9 +35,17 @@ The only requirement is the **filename convention**: `slug.type.md`. The type in
 | `rule`      | knowledge      |
 | `guide`     | knowledge      |
 | `doc`       | knowledge      |
+| `spec`      | knowledge      |
 | `prd`       | vision         |
 | `idea`      | vision         |
 | `plan`      | vision         |
+| `mrd`       | vision         |
+| `brd`       | vision         |
+| `urd`       | vision         |
+| `brs`       | vision         |
+| `strs`      | vision         |
+| `syrs`      | vision         |
+| `srs`       | vision         |
 | `task-type` | experience     |
 | `cpat`      | experience     |
 

@@ -1617,6 +1617,12 @@ What is included and excluded from this business requirements specification.
 - Technology constraints and opportunities
 - Organizational context (capabilities, culture, structure)
 
+### Information Environment
+
+- Key information systems and data sources in the current business context
+- Data flows between business units and external parties
+- Information management constraints (retention, privacy, sovereignty)
+
 ## Mission, Goals and Objectives
 
 | ID | Goal / Objective | Description | Priority | Success Measure |
@@ -1626,7 +1632,7 @@ What is included and excluded from this business requirements specification.
 | BO-001 | Objective 1 | Description | High/Med/Low | Measurable outcome |
 | BO-002 | Objective 2 | Description | High/Med/Low | Measurable outcome |
 
-## Business Model
+## Business Operations
 
 ### Business Processes
 
@@ -1666,6 +1672,22 @@ Describe how the business will operate once the initiative is realized:
 | Degraded | Reduced capability operations | Description of trigger |
 | Maintenance | Planned downtime or transition | Description of trigger |
 
+### Business Operational Quality
+
+Quality expectations at the business level (not system-level metrics):
+
+| ID | Quality Attribute | Requirement | Target |
+|----|-------------------|-------------|--------|
+| BQ-001 | Service level | Description | Value (e.g., 99.9% order fulfillment) |
+| BQ-002 | Customer satisfaction | Description | Value (e.g., NPS > 50) |
+
+## Project Constraints
+
+- Schedule: Key milestones and deadlines
+- Budget: Funding limits and allocation
+- Resources: Team capacity, skills, availability
+- Organizational: Approval processes, governance
+
 ## Success Criteria
 
 | ID | Criterion | Metric | Target | Timeline |
@@ -1700,6 +1722,27 @@ func generateStRSTemplate() string {
 	return `## Purpose and Scope
 
 What this stakeholder requirements specification covers — the system or initiative boundary from the stakeholder perspective.
+
+## System Overview
+
+High-level description of the proposed system or initiative — what it does, major components, and how stakeholders interact with it.
+
+## Business Context
+
+### Business Environment
+
+- Market and industry context relevant to stakeholders
+- Regulatory landscape affecting stakeholder operations
+- Organizational context (structure, culture, capabilities)
+
+### Mission, Goals and Objectives
+
+Stakeholder-facing goals derived from the business mission:
+
+| ID | Goal / Objective | Stakeholder Class | Description | Success Measure |
+|----|------------------|-------------------|-------------|-----------------|
+| SG-001 | Goal 1 | Class | Description | Measurable outcome |
+| SG-002 | Goal 2 | Class | Description | Measurable outcome |
 
 ## Stakeholder Classes
 
@@ -1756,6 +1799,13 @@ How stakeholders should accomplish their goals:
 | Performance | Description | Metric | Value |
 | Reliability | Description | Metric | Value |
 | Availability | Description | Metric | Value |
+
+## System Processes
+
+Key processes the system must support from the stakeholder perspective:
+
+1. Process 1: Which stakeholder class uses it, expected behavior, frequency
+2. Process 2: Which stakeholder class uses it, expected behavior, frequency
 
 ## Operational Policies and Rules
 
@@ -1857,6 +1907,14 @@ High-level description of the system architecture — major components, data flo
 | SyR-R-002 | MTTR | Hours | Value | Incident review |
 | SyR-R-003 | Data durability | RPO/RTO | Value | DR test |
 
+### Information Management Requirements
+
+| ID | Requirement | Description | Verification Method |
+|----|-------------|-------------|---------------------|
+| SyR-I-001 | Data retention | How long data must be stored before archival/deletion | Audit |
+| SyR-I-002 | Data privacy | PII handling, anonymization, access control | Review / Pen test |
+| SyR-I-003 | Data backup | Backup frequency, recovery procedures | DR test |
+
 ## System Interfaces
 
 ### User Interfaces
@@ -1906,6 +1964,13 @@ If applicable — physical devices, sensors, actuators.
 - Evolution and extensibility approach
 - End-of-life considerations
 
+## Assumptions and Dependencies
+
+| ID | Type | Description | Risk if Invalid |
+|----|------|-------------|-----------------|
+| A-001 | Assumption | Description | Impact |
+| D-001 | Dependency | Description | Impact |
+
 ## Verification Approach
 
 | Requirement ID | Verification Method | Acceptance Criteria |
@@ -1916,14 +1981,13 @@ If applicable — physical devices, sensors, actuators.
 
 ## Traceability
 
-This SyRS decomposes requirements from upstream specifications via ` + "`implements`" + ` relation:
+This SyRS decomposes requirements from the stakeholder requirements specification via ` + "`implements`" + ` relation:
 
-- BRS: [link to business requirements specification]
 - StRS: [link to stakeholder requirements specification]
 
 | SyRS Requirement | Source Document | Source Requirement |
 |------------------|-----------------|---------------------|
-| SyR-F-001 | BRS / StRS | Source ID or section |
+| SyR-F-001 | StRS | Source ID or section |
 | SyR-P-001 | StRS | Source ID or section |
 `
 }
@@ -1952,6 +2016,13 @@ Expected users of this component — their roles, skills, and interaction patter
 ### Limitations
 
 Known constraints and design boundaries for this component.
+
+### Assumptions and Dependencies
+
+| ID | Type | Description | Risk if Invalid |
+|----|------|-------------|-----------------|
+| A-001 | Assumption | Description | Impact |
+| D-001 | Dependency | Description | Impact |
 
 ## Software Requirements
 
@@ -2008,6 +2079,13 @@ Key entities and their relationships:
 ### Data Flows
 
 How data moves through the component — input sources, transformations, output destinations.
+
+## Usability Requirements
+
+- Accessibility standard (e.g., WCAG 2.1 AA)
+- Learnability: time for a new developer/user to become productive
+- Error messages: clarity, actionability, consistency
+- API ergonomics: discoverability, consistency of naming/patterns
 
 ## Performance
 

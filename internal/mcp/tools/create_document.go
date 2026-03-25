@@ -56,34 +56,13 @@ Document types and when to use each:
   urd       — User needs with personas, journeys, and usability requirements
                 § required sections: User Personas, User Journeys, User Requirements, Usability Requirements, Acceptance Criteria
   brs       — Business requirements specification (ISO 29148 §9.3): formalized business-level requirements
-                § required sections: Business Purpose and Scope, Business Overview, Mission/Goals/Objectives, Business Model, Business Constraints, High-Level Operational Concept, Success Criteria, Assumptions/Dependencies, Traceability
+                § required sections: Business Purpose and Scope, Business Overview (incl. Information Environment), Mission/Goals/Objectives, Business Operations, Business Constraints, High-Level Operational Concept (incl. Operational Quality), Project Constraints, Success Criteria, Assumptions/Dependencies, Traceability
   strs      — Stakeholder requirements specification (ISO 29148 §9.4): formalized stakeholder-level requirements
-                § required sections: Purpose and Scope, Stakeholder Classes, Operational Concept (ConOps), Stakeholder Requirements, Operational Policies/Rules, Operational Constraints, Compliance/Regulatory, Project Constraints, Traceability
+                § required sections: Purpose and Scope, System Overview, Business Context, Stakeholder Classes, Operational Concept (ConOps), Stakeholder Requirements, System Processes, Operational Policies/Rules, Operational Constraints, Compliance/Regulatory, Project Constraints, Traceability
   syrs      — System requirements specification (ISO 29148 §9.5): formalized system-level requirements
-                § required sections: System Purpose and Scope, System Overview, System Requirements, System Interfaces, System Operations, Policy/Regulation, Life Cycle Sustainment, Verification Approach, Traceability
+                § required sections: System Purpose and Scope, System Overview, System Requirements (incl. Information Management), System Interfaces, System Operations, Policy/Regulation, Life Cycle Sustainment, Assumptions/Dependencies, Verification Approach, Traceability
   srs       — Software requirements specification (ISO 29148 §9.6): formalized software component requirements
-                § required sections: Purpose and Scope, Product Perspective, Software Requirements, External Interfaces, Data Requirements, Performance, Design Constraints, Software Quality Attributes, Verification Matrix, Traceability
-
-TYPE DISAMBIGUATION:
-- rule vs doc: rule prescribes behavior ("Always do X") with good/bad examples and enforcement. doc describes what exists (tables, registries, explanations). Descriptive content → doc.
-- adr vs rfc: adr = decision already final. rfc = proposal open for feedback.
-- guide vs doc: guide = sequential steps to follow. doc = non-sequential reference to look things up.
-- spec vs doc: spec documents a canonical normative contract for a concrete technical boundary (behavior, constraints, invariants, conformance). doc describes what exists (registries, glossaries, tables) without normative requirements. Normative contract → spec; structural reference → doc.
-- spec vs rule: spec is a technical contract for a system component. rule is a team practice standard. System behavior contract → spec; human behavior standard → rule.
-- spec vs adr: spec is the living definition of correct behavior, kept current. adr is a fixed record of a past decision. Maintained contract → spec; historical decision → adr.
-- mrd vs prd: mrd analyzes the MARKET (TAM/SAM/SOM, competitors, timing) without proposing a solution. prd proposes a PRODUCT with requirements and solution overview.
-- brd vs prd: brd focuses on BUSINESS JUSTIFICATION (ROI, budget, stakeholders). prd focuses on PRODUCT DEFINITION (features, user stories, solution).
-- urd vs prd: urd captures user needs via PERSONAS and JOURNEYS (discovery). prd defines product requirements with acceptance criteria (specification).
-- mrd vs brd: mrd is MARKET ANALYSIS (external — industry, competitors, TAM). brd is BUSINESS JUSTIFICATION (internal — ROI, stakeholders, budget).
-- brd vs urd: brd captures ORGANIZATIONAL needs (goals, budget, regulations). urd captures END-USER needs (personas, journeys, usability).
-- brs vs prd: brs has ONLY business objectives with ISO structure (mission, operational concept, success criteria), no user stories or solution. prd has user stories, functional requirements, solution overview.
-- strs vs prd: strs groups requirements PER STAKEHOLDER CLASS with ConOps (operational scenarios). prd lists requirements by priority (P0/P1/P2).
-- syrs vs adr: syrs defines WHOLE SYSTEM BOUNDARY with interface contracts and verification approach. adr records a single architectural decision.
-- srs vs prd: srs has PER-ENDPOINT/PER-FUNCTION requirements with verification matrix. prd has product-level requirements.
-- brs vs strs: brs = WHY (business outcomes, technology-agnostic mission/goals). strs = WHAT stakeholders need (operational scenarios, solution-aware, per-class).
-- syrs vs srs: syrs = WHOLE SYSTEM boundary, all interfaces and modes. srs = SINGLE COMPONENT's detailed behavior, one software module.
-- brs vs brd: brs is a FORMAL ISO SPECIFICATION (mission, goals, operational concept, success criteria). brd is an INFORMAL SOURCE (business justification: ROI, budget, stakeholders). brs formalizes what brd captures informally.
-- strs vs urd: strs is a FORMAL ISO SPECIFICATION (per-stakeholder-class requirements with ConOps). urd is an INFORMAL SOURCE (personas, journeys, usability). strs formalizes what urd captures informally.
+                § required sections: Purpose and Scope, Product Perspective (incl. Assumptions/Dependencies), Software Requirements, External Interfaces, Data Requirements, Usability Requirements, Performance, Design Constraints, Software Quality Attributes, Verification Matrix, Traceability
 
 Returns: JSON with path, type, category, title, status, and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
 		mcp.WithString("type",

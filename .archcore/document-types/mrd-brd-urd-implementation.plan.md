@@ -1,6 +1,6 @@
 ---
 title: "Implementation Plan: Add MRD, BRD, URD Document Types as Requirement Sources Track"
-status: draft
+status: accepted
 ---
 
 ## Goal
@@ -19,39 +19,39 @@ Add MRD (Market Requirements Document), BRD (Business Requirements Document), an
 
 ### Phase 1: Core Type System
 
-- [ ] Add constants to @templates/templates.go: `TypeMRD = "mrd"`, `TypeBRD = "brd"`, `TypeURD = "urd"`
-- [ ] Add all 3 to `categoryMap` as `CategoryVision`
-- [ ] Extend `ValidTypes()` return slice with all 3 slugs
-- [ ] Add 3 `case` arms in `GenerateTemplate()` switch
-- [ ] Implement `generateMRDTemplate()` — sections: Market Landscape (Industry Trends, Market Size, Dynamics), TAM/SAM/SOM (Addressable Market), Competitive Analysis (Competitors, Positioning, Differentiation), Market Needs (Pain Points, Unmet Needs, Opportunities), Opportunity & Timing (Window, Urgency, Market Readiness)
-- [ ] Implement `generateBRDTemplate()` — sections: Business Objectives (Goals, Strategic Alignment), Stakeholders (Sponsors, Decision-Makers, Influence Map), Business Rules & Constraints (Policies, Regulations, Budget), Success Metrics & ROI (KPIs, Expected Returns, Payback Period), Dependencies (Organizational, Technical, External)
-- [ ] Implement `generateURDTemplate()` — sections: User Personas (Profiles, Goals, Pain Points, Context), User Journeys (Current State, Desired State, Touchpoints), User Requirements (Functional Needs Per Persona), Usability Requirements (Accessibility, Learnability, Efficiency), Acceptance Criteria (User-Facing Validation Conditions)
+- [x] Add constants to @templates/templates.go: `TypeMRD = "mrd"`, `TypeBRD = "brd"`, `TypeURD = "urd"`
+- [x] Add all 3 to `categoryMap` as `CategoryVision`
+- [x] Extend `ValidTypes()` return slice with all 3 slugs
+- [x] Add 3 `case` arms in `GenerateTemplate()` switch
+- [x] Implement `generateMRDTemplate()` — sections: Market Landscape (Industry Trends, Market Size, Dynamics), TAM/SAM/SOM (Addressable Market), Competitive Analysis (Competitors, Positioning, Differentiation), Market Needs (Pain Points, Unmet Needs, Opportunities), Opportunity & Timing (Window, Urgency, Market Readiness)
+- [x] Implement `generateBRDTemplate()` — sections: Business Objectives (Goals, Strategic Alignment), Stakeholders (Sponsors, Decision-Makers, Influence Map), Business Rules & Constraints (Policies, Regulations, Budget), Success Metrics & ROI (KPIs, Expected Returns, Payback Period), Dependencies (Organizational, Technical, External)
+- [x] Implement `generateURDTemplate()` — sections: User Personas (Profiles, Goals, Pain Points, Context), User Journeys (Current State, Desired State, Touchpoints), User Requirements (Functional Needs Per Persona), Usability Requirements (Accessibility, Learnability, Efficiency), Acceptance Criteria (User-Facing Validation Conditions)
 
 ### Phase 2: MCP Integration
 
-- [ ] Update @internal/mcp/server.go `mcpServerInstructions`: add types to vision listing, add 3 WHEN TO CREATE entries, add 5 cross-track disambiguation rules, update REQUIREMENTS APPROACH section to describe three tracks
-- [ ] Update @internal/mcp/tools/create_document.go tool description: add 3 type entries with required sections, add 5 disambiguation rules
-- [ ] Update @internal/mcp/tools/list_documents.go: add new types to `types` parameter description
+- [x] Update @internal/mcp/server.go `mcpServerInstructions`: add types to vision listing, add 3 WHEN TO CREATE entries, add 5 cross-track disambiguation rules, update REQUIREMENTS APPROACH section to describe three tracks
+- [x] Update @internal/mcp/tools/create_document.go tool description: add 3 type entries with required sections, add 5 disambiguation rules
+- [x] Update @internal/mcp/tools/list_documents.go: add new types to `types` parameter description
 
 ### Phase 3: Tests
 
-- [ ] Add 3 entries to template table-driven tests in @templates/templates_test.go
-- [ ] Add 3 entries to AllTypes test in @internal/mcp/tools/create_document_test.go
-- [ ] Update ValidTypes count assertions and TypesByCategory vision count
+- [x] Add 3 entries to template table-driven tests in @templates/templates_test.go
+- [x] Add 3 entries to AllTypes test in @internal/mcp/tools/create_document_test.go
+- [x] Update ValidTypes count assertions and TypesByCategory vision count
 
 ### Phase 4: Documentation
 
-- [ ] Update @.archcore/dir/categories-and-document-types.doc.md: add 3 types to vision table, add cross-track disambiguation entries, document three-track model
-- [ ] Update @.archcore/document-types/prd-vs-iso-29148-requirements-strategy.idea.md: reference three tracks (Product, Sources, ISO) instead of two tracks (Simple, Detailed)
+- [x] Update @.archcore/dir/categories-and-document-types.doc.md: add 3 types to vision table, add cross-track disambiguation entries, document three-track model
+- [x] Update @.archcore/document-types/prd-vs-iso-29148-requirements-strategy.idea.md: reference three tracks (Product, Sources, ISO) instead of two tracks (Simple, Detailed)
 
 ## Acceptance Criteria
 
-- [ ] `go build -o archcore .` succeeds
-- [ ] `go test ./...` passes (all existing + new tests)
-- [ ] `./archcore mcp` shows all 3 new types in MCP instructions
-- [ ] Creating a document of each new type via MCP renders the correct template
-- [ ] Disambiguation rules clearly distinguish mrd/brd/urd from existing prd and ISO types (brs/strs)
-- [ ] Cross-track relations (e.g., MRD→BRS via `implements`) work with existing relation infrastructure
+- [x] `go build -o archcore .` succeeds
+- [x] `go test ./...` passes (all existing + new tests)
+- [x] `./archcore mcp` shows all 3 new types in MCP instructions
+- [x] Creating a document of each new type via MCP renders the correct template
+- [x] Disambiguation rules clearly distinguish mrd/brd/urd from existing prd and ISO types (brs/strs)
+- [x] Cross-track relations (e.g., MRD→BRS via `implements`) work with existing relation infrastructure
 
 ## Dependencies
 
@@ -59,7 +59,7 @@ Add MRD (Market Requirements Document), BRD (Business Requirements Document), an
 |------------|------|--------|
 | Existing template system in templates.go | Internal | Ready |
 | MCP server instructions in server.go | Internal | Ready |
-| ISO 29148 types (BRS, StRS, SyRS, SRS) | Internal | Planned (parallel implementation) |
+| ISO 29148 types (BRS, StRS, SyRS, SRS) | Internal | Complete |
 | Existing `implements` relation type | Internal | Ready |
 
 ## Notes

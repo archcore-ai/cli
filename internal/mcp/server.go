@@ -109,13 +109,13 @@ All tracks can coexist — use what fits the project.
 REQUIREMENTS LAYERS — Sources and Specifications are SEPARATE layers:
   Layer A (Sources):        mrd, brd, urd, prd — capture raw requirements from market, business, and user perspectives
   Layer B (Specifications): brs, strs, syrs, srs — formalize requirements into ISO-structured specifications
-  Sources FEED INTO specifications via "implements" relation:
-    mrd → brs  (market requirements formalize into business requirements specification)
-    brd → brs  (business objectives formalize into business requirements specification)
-    brd → strs (business stakeholder needs formalize into stakeholder requirements specification)
-    urd → strs (user needs formalize into stakeholder requirements specification)
-  Within ISO cascade, each level feeds the next via "implements" relation:
-    brs → strs → syrs → srs
+  Specifications formalize sources. Use "implements" relation with the spec as source and the source doc as target:
+    brs implements mrd  (BRS formalizes market requirements from MRD)
+    brs implements brd  (BRS formalizes business objectives from BRD)
+    strs implements urd (StRS formalizes user needs from URD)
+    strs implements brs (StRS decomposes requirements from BRS — ISO cascade)
+  Within ISO cascade, each level decomposes the previous via "implements" relation:
+    strs implements brs → syrs implements strs → srs implements syrs
   PRD can substitute for the entire ISO cascade (use "related" relation to link PRD to ISO types).
   Do NOT confuse source documents (mrd/brd/urd) with specification documents (brs/strs/syrs/srs). Sources are informal, discovery-oriented. Specifications are formal, ISO-structured.
 
