@@ -21,7 +21,7 @@ Example structures:
 
 Document types and their virtual categories:
   knowledge: adr (decisions), rfc (proposals), rule (standards), guide (how-tos), doc (reference), spec (contracts)
-  vision:    prd (requirements), idea (concepts), plan (action plans)
+  vision:    prd (requirements), idea (concepts), plan (action plans), mrd (market requirements), brd (business requirements), urd (user requirements)
   experience: task-type (typical task patterns), cpat (code pattern changes)
 
 DOCUMENT RELATIONS:
@@ -58,6 +58,9 @@ WHEN TO CREATE:
 - A product concept or technical idea needs capturing → idea
 - An implementation plan with tasks is formed → plan
 - Product requirements with goals, scope, and acceptance criteria → prd
+- Market analysis with TAM/SAM/SOM, competitive landscape, and market needs → mrd
+- Business justification with objectives, ROI, stakeholders, and budget → brd
+- User needs with personas, journeys, and usability requirements → urd
 
 WHEN TO UPDATE (use update_document):
 - A decision is finalized → change status from "draft" to "accepted"
@@ -78,6 +81,18 @@ TYPE SELECTION RULES (use these to disambiguate):
 - spec vs doc: A spec documents the canonical normative contract of a concrete technical boundary — externally observable behavior, constraints, invariants, and conformance requirements. A doc describes what already exists (tables, registries, glossaries) without normative requirements. If the document defines a normative contract for a specific artifact, use spec.
 - spec vs rule: A spec is a technical contract for a component or interface — it specifies what correct behavior is. A rule is a team standard for how engineers must act ("Always do X"). If the content is about a system's required behavior rather than a human practice, use spec.
 - spec vs adr: A spec is the living canonical truth of how something works. An adr is the decision record explaining why a choice was made. A single decision may produce both: the adr captures the "why", the spec captures the "what". If the content is prescriptive and meant to be kept current, use spec; if it records a past decision, use adr.
+- mrd vs prd: MRD analyzes the MARKET (TAM/SAM/SOM, competitors, timing) without proposing a solution. PRD proposes a PRODUCT with requirements and solution overview.
+- brd vs prd: BRD focuses on BUSINESS JUSTIFICATION (ROI, budget, organizational impact). PRD focuses on PRODUCT DEFINITION (features, user stories, solution).
+- urd vs prd: URD captures user needs via PERSONAS and JOURNEYS (discovery-oriented). PRD defines product requirements with acceptance criteria (specification-oriented).
+- mrd vs brd: MRD is MARKET ANALYSIS (external-facing — industry, competitors, TAM). BRD is BUSINESS JUSTIFICATION (internal-facing — ROI, stakeholders, budget).
+- brd vs urd: BRD captures ORGANIZATIONAL needs (goals, budget, regulations). URD captures END-USER needs (personas, journeys, usability).
+
+REQUIREMENTS TRACKS:
+Three approaches to requirements engineering, choose based on project complexity:
+  Product track (simple):  prd — single document covering vision, requirements, and solution. Best for small teams, internal tools, rapid prototyping.
+  Sources track (discovery): mrd → brd → urd — captures where requirements come from (market, business, users). Best for product teams doing discovery, stakeholder alignment.
+  ISO track (decomposition): brs → strs → syrs → srs — formal requirements cascade. Best for regulated systems, multi-team projects.
+Sources feed into ISO types via "implements" relation (e.g., mrd implements brs, urd implements strs). All tracks can coexist — use what fits the project.
 
 VALID STATUS VALUES:
   draft     — default for new documents; work in progress

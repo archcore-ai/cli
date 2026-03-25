@@ -49,6 +49,12 @@ Document types and when to use each:
                 § required sections: What, When to Use, Steps, Example, Things to Watch Out For
   cpat      — A code pattern change: documents how and why a convention or approach changed
                 § required sections: What Changed, Why, Before, After, Scope
+  mrd       — Market analysis with TAM/SAM/SOM, competitive landscape, and market needs
+                § required sections: Market Landscape, TAM/SAM/SOM, Competitive Analysis, Market Needs, Opportunity and Timing
+  brd       — Business justification with objectives, ROI, stakeholders, and budget
+                § required sections: Business Objectives, Stakeholders, Business Rules and Constraints, Success Metrics and ROI, Dependencies
+  urd       — User needs with personas, journeys, and usability requirements
+                § required sections: User Personas, User Journeys, User Requirements, Usability Requirements, Acceptance Criteria
 
 TYPE DISAMBIGUATION:
 - rule vs doc: rule prescribes behavior ("Always do X") with good/bad examples and enforcement. doc describes what exists (tables, registries, explanations). Descriptive content → doc.
@@ -57,6 +63,11 @@ TYPE DISAMBIGUATION:
 - spec vs doc: spec documents a canonical normative contract for a concrete technical boundary (behavior, constraints, invariants, conformance). doc describes what exists (registries, glossaries, tables) without normative requirements. Normative contract → spec; structural reference → doc.
 - spec vs rule: spec is a technical contract for a system component. rule is a team practice standard. System behavior contract → spec; human behavior standard → rule.
 - spec vs adr: spec is the living definition of correct behavior, kept current. adr is a fixed record of a past decision. Maintained contract → spec; historical decision → adr.
+- mrd vs prd: mrd analyzes the MARKET (TAM/SAM/SOM, competitors, timing) without proposing a solution. prd proposes a PRODUCT with requirements and solution overview.
+- brd vs prd: brd focuses on BUSINESS JUSTIFICATION (ROI, budget, stakeholders). prd focuses on PRODUCT DEFINITION (features, user stories, solution).
+- urd vs prd: urd captures user needs via PERSONAS and JOURNEYS (discovery). prd defines product requirements with acceptance criteria (specification).
+- mrd vs brd: mrd is MARKET ANALYSIS (external — industry, competitors, TAM). brd is BUSINESS JUSTIFICATION (internal — ROI, stakeholders, budget).
+- brd vs urd: brd captures ORGANIZATIONAL needs (goals, budget, regulations). urd captures END-USER needs (personas, journeys, usability).
 
 Returns: JSON with path, type, category, title, status, and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
 		mcp.WithString("type",
@@ -186,39 +197,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			"status":   status,
 		}
 
-		// Scan for nearby documents in the same directory and auto-create relations.
-		if allDocs, scanErr := ScanDocuments(baseDir); scanErr == nil {
-			createdDir := filepath.Dir(relPath)
-			var nearby []string
-			for _, d := range allDocs {
-				if d.Path != relPath && filepath.Dir(d.Path) == createdDir {
-					nearby = append(nearby, d.Path)
-				}
-			}
-			if len(nearby) > 0 {
-				result["nearby_documents"] = nearby
-
-				// Auto-add "related" relations between the new doc and nearby docs.
-				if m, loadErr := sync.LoadManifest(baseDir); loadErr == nil {
-					// relPath is ".archcore/dir/file.md", normalize to "dir/file.md"
-					newDocRel := strings.TrimPrefix(relPath, ".archcore/")
-					var added []string
-					for _, np := range nearby {
-						nearbyRel := strings.TrimPrefix(np, ".archcore/")
-						if m.AddRelation(newDocRel, nearbyRel, sync.RelRelated) {
-							added = append(added, np)
-						}
-					}
-					if len(added) > 0 {
-						if saveErr := sync.SaveManifest(baseDir, m); saveErr != nil {
-							result["auto_relations_error"] = saveErr.Error()
-						} else {
-							result["auto_relations_added"] = added
-						}
-					}
-				}
-			}
-		}
+		addNearbyRelations(baseDir, relPath, result)
 
 		data, err := json.Marshal(result)
 		if err != nil {
@@ -228,6 +207,51 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{mcp.NewTextContent(string(data))},
 		}, nil
+	}
+}
+
+// addNearbyRelations scans for other documents in the same directory as relPath,
+// populates result["nearby_documents"], and auto-creates "related" relations
+// between the new document and its neighbors.
+func addNearbyRelations(baseDir, relPath string, result map[string]any) {
+	allDocs, scanErr := ScanDocuments(baseDir)
+	if scanErr != nil {
+		return
+	}
+
+	createdDir := filepath.Dir(relPath)
+	var nearby []string
+	for _, d := range allDocs {
+		if d.Path != relPath && filepath.Dir(d.Path) == createdDir {
+			nearby = append(nearby, d.Path)
+		}
+	}
+	if len(nearby) == 0 {
+		return
+	}
+
+	result["nearby_documents"] = nearby
+
+	// Auto-add "related" relations between the new doc and nearby docs.
+	m, loadErr := sync.LoadManifest(baseDir)
+	if loadErr != nil {
+		return
+	}
+	// relPath is ".archcore/dir/file.md", normalize to "dir/file.md"
+	newDocRel := strings.TrimPrefix(relPath, ".archcore/")
+	var added []string
+	for _, np := range nearby {
+		nearbyRel := strings.TrimPrefix(np, ".archcore/")
+		if m.AddRelation(newDocRel, nearbyRel, sync.RelRelated) {
+			added = append(added, np)
+		}
+	}
+	if len(added) > 0 {
+		if saveErr := sync.SaveManifest(baseDir, m); saveErr != nil {
+			result["auto_relations_error"] = saveErr.Error()
+		} else {
+			result["auto_relations_added"] = added
+		}
 	}
 }
 

@@ -9,79 +9,81 @@ func TestGenerateTemplate(t *testing.T) {
 	tests := []struct {
 		name         string
 		documentType DocumentType
-		wantEmpty    bool
 		wantContains []string
 	}{
 		{
 			name:         "ADR template",
 			documentType: TypeADR,
-			wantEmpty:    false,
 			wantContains: []string{"## Context", "## Decision", "## Consequences", "### Positive", "### Negative", "## References", "## Alternatives Considered"},
 		},
 		{
 			name:         "RFC template",
 			documentType: TypeRFC,
-			wantEmpty:    false,
 			wantContains: []string{"## Summary", "## Motivation", "## Detailed Design", "## Drawbacks", "## Alternatives", "## Unresolved Questions", "## Implementation Plan", "## Security Considerations"},
 		},
 		{
 			name:         "Rule template",
 			documentType: TypeRule,
-			wantEmpty:    false,
 			wantContains: []string{"## Description", "## Rule", "## Examples", "### Good", "### Bad", "## Exceptions", "## References", "## Enforcement"},
 		},
 		{
 			name:         "Guide template",
 			documentType: TypeGuide,
-			wantEmpty:    false,
 			wantContains: []string{"## Overview", "## Prerequisites", "## Steps", "### Step 1:", "### Step 2:", "### Step 3:", "## Common Issues", "## Related Resources", "## Verification"},
 		},
 		{
 			name:         "Doc template",
 			documentType: TypeDoc,
-			wantEmpty:    false,
 			wantContains: []string{"## Overview", "## Content", "## Examples", "## Related Resources", "## Best Practices", "## FAQ"},
 		},
 		{
 			name:         "Task-Type template",
 			documentType: TypeTaskType,
-			wantEmpty:    false,
 			wantContains: []string{"## What", "## When to Use", "## Steps", "## Example", "## Things to Watch Out For"},
 		},
 		{
 			name:         "CPAT template",
 			documentType: TypeCPAT,
-			wantEmpty:    false,
 			wantContains: []string{"## What Changed", "## Why", "## Before", "## After", "## Scope"},
 		},
 		{
 			name:         "PRD template",
 			documentType: TypePRD,
-			wantEmpty:    false,
 			wantContains: []string{"## Vision", "## Problem Statement", "## Goals and Success Metrics", "## Requirements", "## Constraints", "## Timeline"},
 		},
 		{
 			name:         "Idea template",
 			documentType: TypeIdea,
-			wantEmpty:    false,
 			wantContains: []string{"## Idea", "## Value", "## Possible Implementation", "## Risks and Constraints", "## Next Steps"},
 		},
 		{
 			name:         "Plan template",
 			documentType: TypePlan,
-			wantEmpty:    false,
 			wantContains: []string{"## Goal", "## Tasks", "## Acceptance Criteria", "## Dependencies", "## Notes"},
 		},
 		{
 			name:         "Spec template",
 			documentType: TypeSpec,
-			wantEmpty:    false,
 			wantContains: []string{"## Purpose", "## Scope", "## Authority", "## Subject", "## Contract Surface", "## Normative Behavior", "## Constraints", "## Invariants", "## Error Handling", "## Conformance"},
+		},
+		{
+			name:         "MRD template",
+			documentType: TypeMRD,
+			wantContains: []string{"## Market Landscape", "## TAM / SAM / SOM", "## Competitive Analysis", "## Market Needs", "## Opportunity and Timing"},
+		},
+		{
+			name:         "BRD template",
+			documentType: TypeBRD,
+			wantContains: []string{"## Business Objectives", "## Stakeholders", "## Business Rules and Constraints", "## Success Metrics and ROI", "## Dependencies"},
+		},
+		{
+			name:         "URD template",
+			documentType: TypeURD,
+			wantContains: []string{"## User Personas", "## User Journeys", "## User Requirements", "## Usability Requirements", "## Acceptance Criteria"},
 		},
 		{
 			name:         "Unknown type falls back to doc template",
 			documentType: DocumentType("unknown"),
-			wantEmpty:    false,
 			wantContains: []string{"## Overview", "## Content", "## Examples", "## Related Resources"},
 		},
 	}
@@ -90,13 +92,6 @@ func TestGenerateTemplate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got := GenerateTemplate(tt.documentType)
-
-			if tt.wantEmpty {
-				if got != "" {
-					t.Errorf("GenerateTemplate(%q) = %q, want empty string", tt.documentType, got)
-				}
-				return
-			}
 
 			if got == "" {
 				t.Errorf("GenerateTemplate(%q) returned empty string", tt.documentType)
@@ -433,6 +428,21 @@ func TestTemplateStructure(t *testing.T) {
 			documentType: TypePlan,
 			minLength:    300,
 		},
+		{
+			name:         "MRD has substantial content",
+			documentType: TypeMRD,
+			minLength:    1500,
+		},
+		{
+			name:         "BRD has substantial content",
+			documentType: TypeBRD,
+			minLength:    1500,
+		},
+		{
+			name:         "URD has substantial content",
+			documentType: TypeURD,
+			minLength:    1500,
+		},
 	}
 
 	for _, tt := range tests {
@@ -447,7 +457,7 @@ func TestTemplateStructure(t *testing.T) {
 }
 
 func TestTemplateMarkdownFormatting(t *testing.T) {
-	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeSpec, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan}
+	types := []DocumentType{TypeADR, TypeRFC, TypeRule, TypeGuide, TypeDoc, TypeSpec, TypeTaskType, TypeCPAT, TypePRD, TypeIdea, TypePlan, TypeMRD, TypeBRD, TypeURD}
 
 	for _, typ := range types {
 		t.Run(string(typ), func(t *testing.T) {

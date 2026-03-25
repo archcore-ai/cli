@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -23,7 +24,7 @@ Returns: a JSON array of documents, each with path, title, type, category, and s
 
 Use the returned paths directly as input to get_document. Do not construct paths manually.`),
 		mcp.WithArray("types",
-			mcp.Description("Filter by one or more document types. Valid values: adr, rfc, rule, guide, doc, spec, prd, idea, plan, task-type, cpat. Example: [\"adr\", \"rule\"] returns only decision records and standards."),
+			mcp.Description("Filter by one or more document types. Valid values: adr, rfc, rule, guide, doc, spec, prd, idea, plan, task-type, cpat, mrd, brd, urd. Example: [\"adr\", \"rule\"] returns only decision records and standards."),
 			mcp.WithStringItems(),
 		),
 		mcp.WithString("category",
@@ -46,7 +47,7 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		docs, err := ScanDocuments(baseDir)
 		if err != nil {
-			return errorResult("scanning documents: " + err.Error()), nil
+			return nil, fmt.Errorf("scanning documents: %w", err)
 		}
 
 		types := request.GetStringSlice("types", nil)

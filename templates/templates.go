@@ -22,6 +22,9 @@ const (
 	TypeIdea     DocumentType = "idea"
 	TypePlan     DocumentType = "plan"
 	TypeSpec     DocumentType = "spec"
+	TypeMRD      DocumentType = "mrd"
+	TypeBRD      DocumentType = "brd"
+	TypeURD      DocumentType = "urd"
 )
 
 const (
@@ -61,6 +64,9 @@ var categoryMap = map[DocumentType]string{
 	TypePRD:  CategoryVision,
 	TypeIdea: CategoryVision,
 	TypePlan: CategoryVision,
+	TypeMRD:  CategoryVision,
+	TypeBRD:  CategoryVision,
+	TypeURD:  CategoryVision,
 
 	TypeADR:     CategoryKnowledge,
 	TypeRFC:     CategoryKnowledge,
@@ -95,6 +101,9 @@ func ValidTypes() []string {
 		string(TypePRD),
 		string(TypeIdea),
 		string(TypePlan),
+		string(TypeMRD),
+		string(TypeBRD),
+		string(TypeURD),
 	}
 }
 
@@ -225,6 +234,12 @@ func GenerateTemplate(documentType DocumentType) string {
 		return generateIdeaTemplate()
 	case TypePlan:
 		return generatePlanTemplate()
+	case TypeMRD:
+		return generateMRDTemplate()
+	case TypeBRD:
+		return generateBRDTemplate()
+	case TypeURD:
+		return generateURDTemplate()
 	default:
 		return generateDocTemplate()
 	}
@@ -1239,6 +1254,319 @@ Include only for breaking or behaviorally significant changes.
 - [Breaking changes]
 - [Required migration steps]
 - [Temporary compatibility behavior]
+`
+}
+
+func generateMRDTemplate() string {
+	return `## Market Landscape
+
+### Industry Trends
+
+- Trend 1: Description and relevance
+- Trend 2: Description and relevance
+
+### Market Size
+
+- Total market size and growth rate
+- Key segments and their dynamics
+
+### Market Dynamics
+
+- Key drivers accelerating the market
+- Key inhibitors or headwinds
+
+## TAM / SAM / SOM
+
+| Metric | Value | Methodology |
+|--------|-------|-------------|
+| TAM (Total Addressable Market) | $ | Top-down / bottom-up |
+| SAM (Serviceable Addressable Market) | $ | Segmentation criteria |
+| SOM (Serviceable Obtainable Market) | $ | Realistic capture rate |
+
+### Assumptions
+
+- Assumption 1: Basis for estimate
+- Assumption 2: Basis for estimate
+
+## Competitive Analysis
+
+### Competitors
+
+| Competitor | Segment | Strengths | Weaknesses |
+|------------|---------|-----------|------------|
+| Competitor 1 | Segment | Strengths | Weaknesses |
+| Competitor 2 | Segment | Strengths | Weaknesses |
+
+### Positioning
+
+Where the opportunity sits relative to competitors.
+
+### Differentiation
+
+Key differentiators that create defensible advantage:
+
+- Differentiator 1: Description
+- Differentiator 2: Description
+
+## Market Needs
+
+### Pain Points
+
+| Pain Point | Severity | Affected Segment | Current Workaround |
+|------------|----------|------------------|--------------------|
+| Pain point 1 | High/Med/Low | Segment | Workaround |
+| Pain point 2 | High/Med/Low | Segment | Workaround |
+
+### Unmet Needs
+
+- Unmet need 1: Why it remains unmet
+- Unmet need 2: Why it remains unmet
+
+### Opportunities
+
+- Opportunity 1: How it connects to market needs
+- Opportunity 2: How it connects to market needs
+
+## Opportunity and Timing
+
+### Market Window
+
+- Why now? What has changed to create this opportunity?
+- What is the window of opportunity?
+
+### Urgency
+
+- Competitive pressure or first-mover considerations
+- External events creating urgency (regulatory, technology shifts)
+
+### Market Readiness
+
+- Customer readiness to adopt
+- Technology maturity level
+- Ecosystem readiness (partners, integrations)
+
+## Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Risk 1 | High/Med/Low | High/Med/Low | Strategy |
+| Risk 2 | High/Med/Low | High/Med/Low | Strategy |
+
+## References
+
+- Market research sources
+- Industry reports
+- Related documents
+`
+}
+
+func generateBRDTemplate() string {
+	return `## Business Objectives
+
+### Goals
+
+| Goal | Description | Strategic Alignment |
+|------|-------------|---------------------|
+| Goal 1 | Description | How it supports strategy |
+| Goal 2 | Description | How it supports strategy |
+
+### Strategic Alignment
+
+How this initiative aligns with company/division strategy:
+
+- Strategic priority 1: Connection
+- Strategic priority 2: Connection
+
+## Stakeholders
+
+### Sponsors and Decision-Makers
+
+| Stakeholder | Role | Interest | Influence |
+|-------------|------|----------|-----------|
+| Stakeholder 1 | Sponsor / Approver / Advisor | Description | High/Med/Low |
+| Stakeholder 2 | Sponsor / Approver / Advisor | Description | High/Med/Low |
+
+### Influence Map
+
+Key relationships and decision dynamics:
+
+- Decision-maker 1: What they care about, what would block approval
+- Decision-maker 2: What they care about, what would block approval
+
+## Business Rules and Constraints
+
+### Policies
+
+- Policy 1: Description and impact on initiative
+- Policy 2: Description and impact on initiative
+
+### Regulations
+
+- Regulation 1: Compliance requirement and scope
+- Regulation 2: Compliance requirement and scope
+
+### Budget
+
+| Category | Estimated Cost | Funding Source |
+|----------|---------------|----------------|
+| Development | $ | Source |
+| Operations | $ | Source |
+| Total | $ | |
+
+## Success Metrics and ROI
+
+### KPIs
+
+| KPI | Current Baseline | Target | Timeline |
+|-----|-----------------|--------|----------|
+| KPI 1 | Value | Value | Date |
+| KPI 2 | Value | Value | Date |
+
+### Expected Returns
+
+| Benefit | Quantified Value | Confidence |
+|---------|-----------------|------------|
+| Revenue impact | $ | High/Med/Low |
+| Cost savings | $ | High/Med/Low |
+| Efficiency gain | % | High/Med/Low |
+
+### Payback Period
+
+- Initial investment: $
+- Expected payback period: X months/years
+- Break-even point: Date
+
+## Dependencies
+
+### Organizational Dependencies
+
+- Dependency 1: Team/department and what is needed
+- Dependency 2: Team/department and what is needed
+
+### Technical Dependencies
+
+- Dependency 1: System/platform and what is needed
+- Dependency 2: System/platform and what is needed
+
+### External Dependencies
+
+- Dependency 1: Vendor/partner and what is needed
+- Dependency 2: Vendor/partner and what is needed
+
+## Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Risk 1 | High/Med/Low | High/Med/Low | Strategy |
+| Risk 2 | High/Med/Low | High/Med/Low | Strategy |
+
+## References
+
+- Related business documents
+- Strategic plans
+- Related documents
+`
+}
+
+func generateURDTemplate() string {
+	return `## User Personas
+
+### Persona 1: [Name]
+
+| Attribute | Description |
+|-----------|-------------|
+| Role | Description |
+| Goals | What they are trying to achieve |
+| Pain Points | Current frustrations |
+| Context | Environment, tools, constraints |
+| Technical Skill | Novice / Intermediate / Expert |
+
+### Persona 2: [Name]
+
+| Attribute | Description |
+|-----------|-------------|
+| Role | Description |
+| Goals | What they are trying to achieve |
+| Pain Points | Current frustrations |
+| Context | Environment, tools, constraints |
+| Technical Skill | Novice / Intermediate / Expert |
+
+## User Journeys
+
+### Current State
+
+How users accomplish their goals today:
+
+1. Step 1: What happens, pain points
+2. Step 2: What happens, pain points
+3. Step 3: What happens, pain points
+
+### Desired State
+
+How users should accomplish their goals:
+
+1. Step 1: What happens, improvement over current
+2. Step 2: What happens, improvement over current
+3. Step 3: What happens, improvement over current
+
+### Touchpoints
+
+| Touchpoint | Channel | User Action | System Response |
+|------------|---------|-------------|-----------------|
+| Touchpoint 1 | Web/Mobile/API | Action | Response |
+| Touchpoint 2 | Web/Mobile/API | Action | Response |
+
+## User Requirements
+
+### Functional Needs Per Persona
+
+#### [Persona 1 Name]
+
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| UR-001 | Description | P0/P1/P2 | Why this matters to the persona |
+| UR-002 | Description | P0/P1/P2 | Why this matters to the persona |
+
+#### [Persona 2 Name]
+
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| UR-101 | Description | P0/P1/P2 | Why this matters to the persona |
+| UR-102 | Description | P0/P1/P2 | Why this matters to the persona |
+
+## Usability Requirements
+
+### Accessibility
+
+- Accessibility standard (e.g., WCAG 2.1 AA)
+- Specific accessibility requirements
+
+### Learnability
+
+- Time to first productive use: Target
+- Training required: Yes/No, scope
+- Documentation requirements
+
+### Efficiency
+
+- Task completion time targets
+- Number of steps for common tasks
+- Error rate targets
+
+## Acceptance Criteria
+
+User-facing validation conditions:
+
+| ID | Criterion | Persona | Verification Method |
+|----|-----------|---------|---------------------|
+| AC-001 | Given [context], when [action], then [outcome] | Persona | Test / Demo / Survey |
+| AC-002 | Given [context], when [action], then [outcome] | Persona | Test / Demo / Survey |
+
+## References
+
+- User research data
+- Analytics and usage data
+- Related documents
 `
 }
 

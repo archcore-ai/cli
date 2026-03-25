@@ -267,6 +267,9 @@ func TestHandleCreateDocument_AllTypes(t *testing.T) {
 		{"prd", "vision", "### Product Vision Statement"},
 		{"idea", "vision", "### Problem / Opportunity"},
 		{"plan", "vision", "## Tasks"},
+		{"mrd", "vision", "## Market Landscape"},
+		{"brd", "vision", "## Business Objectives"},
+		{"urd", "vision", "## User Personas"},
 	}
 
 	for _, tt := range types {
@@ -586,6 +589,64 @@ func TestFilenameToTitle(t *testing.T) {
 			got := filenameToTitle(tt.input)
 			if got != tt.want {
 				t.Errorf("filenameToTitle(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandleCreateDocument_SlugValidation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		filename  string
+		wantError bool
+	}{
+		{
+			name:      "underscores rejected",
+			filename:  "use_postgres",
+			wantError: true,
+		},
+		{
+			name:      "uppercase rejected",
+			filename:  "Use-Postgres",
+			wantError: true,
+		},
+		{
+			name:      "leading hyphen rejected",
+			filename:  "-leading-hyphen",
+			wantError: true,
+		},
+		{
+			name:      "trailing hyphen rejected",
+			filename:  "trailing-hyphen-",
+			wantError: true,
+		},
+		{
+			name:      "purely numeric accepted",
+			filename:  "123",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			base := setupTestArchcore(t)
+
+			result, err := callTool(HandleCreateDocument(base), map[string]any{
+				"type":     "adr",
+				"filename": tt.filename,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.wantError && !result.IsError {
+				t.Errorf("expected error for filename %q, but got success", tt.filename)
+			}
+			if !tt.wantError && result.IsError {
+				t.Errorf("expected success for filename %q, but got error: %s",
+					tt.filename, result.Content[0].(mcp.TextContent).Text)
 			}
 		})
 	}
