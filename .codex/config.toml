@@ -2,3 +2,6 @@
 [mcp_servers.archcore]
 command = "archcore"
 args = ["mcp"]
+
+[mcp_servers.archcore.tools.create_document]
+approval_mode = "approve"
