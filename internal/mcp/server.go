@@ -8,7 +8,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-var mcpServerInstructions = `You are working with a project that uses Archcore — Shared architectural memory for AI coding agents.
+var mcpServerInstructions = `You are working with a project that uses Archcore — Git-native context for AI coding agents.
 
 The .archcore/ directory contains Markdown files with YAML frontmatter (title, status). The directory structure inside .archcore/ is free-form — you can organize documents by domain, feature, team, or any custom structure. Categories (vision, knowledge, experience) are virtual — derived automatically from the document type in the filename (slug.type.md), not from the physical directory.
 

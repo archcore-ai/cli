@@ -66,7 +66,7 @@ func NewRootCmd(version string) *cobra.Command {
 	ver := cleanVersion(version)
 	root := &cobra.Command{
 		Use:           "archcore",
-		Short:         "Archcore — Shared architectural memory for AI coding agents",
+		Short:         "Archcore — Git-native context for AI coding agents",
 		Version:       ver,
 		SilenceErrors: true,
 		SilenceUsage:  true,

@@ -17,8 +17,8 @@ func buildSessionContext(baseDir string) (string, int) {
 	}
 
 	var b strings.Builder
-	b.WriteString("[Archcore — Shared architectural memory for AI coding agents]\n")
-	b.WriteString("Git-native architectural memory for AI coding agents.\n")
+	b.WriteString("[Archcore — Git-native context for AI coding agents]\n")
+	b.WriteString("Git-native context for AI coding agents.\n")
 	b.WriteString("You have MCP tools available: list_documents, get_document, create_document, update_document, add_relation, remove_relation, list_relations.\n")
 
 	// Pre-group documents by category.

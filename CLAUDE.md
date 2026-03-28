@@ -30,7 +30,7 @@ go test -v ./...
 
 ## Architecture
 
-This is a Go CLI tool (`archcore-cli`) for a context engineering platform. It manages a local `.archcore/` directory containing structured documents organized into three categories: `vision/`, `knowledge/`, and `experience/`.
+This is a Go CLI tool (`archcore-cli`) — a git-native context layer for AI coding agents. It manages a local `.archcore/` directory containing structured documents organized into three categories: `vision/`, `knowledge/`, and `experience/`.
 
 ### Package Structure
 

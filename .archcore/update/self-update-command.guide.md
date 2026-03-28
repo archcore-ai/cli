@@ -46,7 +46,7 @@ archcore update
 
 **Output when update is available:**
 ```
-Archcore — Shared architectural memory for AI coding agents
+Archcore — Git-native context for AI coding agents
 
   Checking for updates...
   ✓ Current: v1.0.0
@@ -59,7 +59,7 @@ Archcore — Shared architectural memory for AI coding agents
 
 **Output when already up to date:**
 ```
-Archcore — Shared architectural memory for AI coding agents
+Archcore — Git-native context for AI coding agents
 
   Checking for updates...
   ✓ Current: v1.1.0

@@ -5,13 +5,13 @@
 [![Release](https://img.shields.io/github/v/release/archcore-ai/cli)](https://github.com/archcore-ai/cli/releases)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](https://github.com/archcore-ai/cli/releases)
 
-**Git-native architectural memory for AI coding agents**
+**Git-native context for AI coding agents**
 
-Archcore keeps decisions, rules, plans, incidents, and other project context versioned in your repo so Claude Code, Cursor, Copilot, Gemini CLI, and other agents share the same context across sessions.
+Archcore helps teams turn scattered repo knowledge into structured context that AI coding agents can find, reuse, and follow.
 
-> Archcore brings context engineering into the codebase.
+> Context engineering for repositories.
 
-AI coding agents start every session with partial memory. Your architecture decisions, coding conventions, postmortems, and implementation plans are scattered across docs, chats, and tool-specific memory files. Archcore gives your repo a shared, structured context layer that agents can read and update.
+AI coding agents start every session without project context. Your architecture decisions, coding conventions, postmortems, and implementation plans are scattered across docs, chats, and tool-specific files. Archcore gives your repo a structured context layer that agents can read and update.
 
 ## Why Archcore
 
@@ -150,7 +150,7 @@ Files like `CLAUDE.md`, `AGENTS.md`, or repository instructions are useful, but 
 - relations between documents, like a plan implementing a PRD
 - incident learnings and recurring workflows that agents can reuse later
 
-Archcore complements agent-native memory by giving your repo a durable architectural memory layer.
+Archcore complements instruction files by giving your repo a structured context layer that agents can find, reuse, and follow.
 
 ## Try It
 
