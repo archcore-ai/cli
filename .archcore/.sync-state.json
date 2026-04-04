@@ -249,11 +249,6 @@
       "type": "related"
     },
     {
-      "source": "marketing/context-engineering-market.mrd.md",
-      "target": "marketing/marketing-overview.doc.md",
-      "type": "related"
-    },
-    {
       "source": "cli/mcp-token-optimization.idea.md",
       "target": "cli/archcore-first-search-priority.rule.md",
       "type": "related"
@@ -491,6 +486,16 @@
     {
       "source": "mcp/tag-update-semantics.rule.md",
       "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/unit-testing-patterns.guide.md",
+      "target": "code-quality/go-code-quality.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/go-code-quality.rule.md",
+      "target": "cli-ui/building-the-cli.guide.md",
       "type": "related"
     }
   ]
