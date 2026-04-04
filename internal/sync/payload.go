@@ -11,8 +11,9 @@ import (
 
 // SyncFrontmatter holds the parsed frontmatter fields sent per file.
 type SyncFrontmatter struct {
-	Title  string `json:"title"`
-	Status string `json:"status,omitempty"`
+	Title  string   `json:"title"`
+	Status string   `json:"status,omitempty"`
+	Tags   []string `json:"tags,omitempty"`
 }
 
 // SyncFileEntry is a single file in the sync request body.
@@ -35,10 +36,10 @@ type SyncPayload struct {
 	Deleted     []string        `json:"deleted"`
 }
 
-// ParseFrontmatter extracts title and status from raw document content.
-func ParseFrontmatter(content string) (title, status string) {
-	t, s, _ := templates.SplitDocument([]byte(content))
-	return t, s
+// ParseFrontmatter extracts title, status, and tags from raw document content.
+func ParseFrontmatter(content string) (title, status string, tags []string) {
+	fm, _ := templates.SplitDocument([]byte(content))
+	return fm.Title, fm.Status, fm.Tags
 }
 
 // validateRelPath checks that a relative path does not escape the base directory.
@@ -77,7 +78,7 @@ func BuildPayload(baseDir string, entries []DiffEntry) (*SyncPayload, error) {
 				return nil, fmt.Errorf("reading %s for sync payload: %w", e.RelPath, err)
 			}
 
-			title, status := ParseFrontmatter(string(content))
+			title, status, tags := ParseFrontmatter(string(content))
 
 			if status != "" && !templates.IsValidStatus(status) {
 				return nil, fmt.Errorf("file %s has invalid status %q (valid values: %s)",
@@ -96,6 +97,7 @@ func BuildPayload(baseDir string, entries []DiffEntry) (*SyncPayload, error) {
 				Frontmatter: SyncFrontmatter{
 					Title:  title,
 					Status: status,
+					Tags:   tags,
 				},
 				Content: string(content),
 			}

@@ -19,13 +19,7 @@ func TestBuildSessionContext_Empty(t *testing.T) {
 		t.Error("missing Archcore header")
 	}
 	for _, cat := range []string{"knowledge", "vision", "experience"} {
-		catIdx := strings.Index(ctx, "["+cat+"]")
-		if catIdx == -1 {
-			t.Errorf("missing category %s", cat)
-			continue
-		}
-		after := ctx[catIdx:]
-		if !strings.Contains(after[:50], "(none)") {
+		if !strings.Contains(ctx, "  ["+cat+"]\n    (none)") {
 			t.Errorf("category %s should show (none)", cat)
 		}
 	}
@@ -90,5 +84,48 @@ func TestBuildSessionContext_MentionsRelationTools(t *testing.T) {
 	}
 	if !strings.Contains(ctx, "remove_relation") {
 		t.Error("expected 'remove_relation' in context")
+	}
+}
+
+func TestBuildSessionContext_WithTags(t *testing.T) {
+	t.Parallel()
+	base := setupArchcoreDir(t)
+
+	doc := filepath.Join(base, ".archcore", "knowledge", "tagged.adr.md")
+	if err := os.WriteFile(doc, []byte("---\ntitle: Tagged Doc\nstatus: draft\ntags:\n  - frontend\n  - auth\n---\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	doc2 := filepath.Join(base, ".archcore", "vision", "tagged2.prd.md")
+	if err := os.WriteFile(doc2, []byte("---\ntitle: Another\nstatus: draft\ntags:\n  - frontend\n  - backend\n---\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, _ := buildSessionContext(base)
+	if !strings.Contains(ctx, "EXISTING TAGS:") {
+		t.Error("expected EXISTING TAGS section")
+	}
+	if !strings.Contains(ctx, "frontend") {
+		t.Error("expected 'frontend' tag in context")
+	}
+	if !strings.Contains(ctx, "auth") {
+		t.Error("expected 'auth' tag in context")
+	}
+	if !strings.Contains(ctx, "backend") {
+		t.Error("expected 'backend' tag in context")
+	}
+}
+
+func TestBuildSessionContext_NoTags(t *testing.T) {
+	t.Parallel()
+	base := setupArchcoreDir(t)
+
+	doc := filepath.Join(base, ".archcore", "knowledge", "untagged.adr.md")
+	if err := os.WriteFile(doc, []byte("---\ntitle: Untagged\nstatus: draft\n---\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, _ := buildSessionContext(base)
+	if strings.Contains(ctx, "EXISTING TAGS:") {
+		t.Error("should not show EXISTING TAGS when no tags exist")
 	}
 }

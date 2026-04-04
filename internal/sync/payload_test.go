@@ -9,11 +9,13 @@ import (
 )
 
 func TestParseFrontmatter(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name       string
 		content    string
 		wantTitle  string
 		wantStatus string
+		wantTags   []string
 	}{
 		{
 			name:       "full frontmatter",
@@ -51,27 +53,48 @@ func TestParseFrontmatter(t *testing.T) {
 			wantTitle:  "",
 			wantStatus: "",
 		},
+		{
+			name:       "with tags",
+			content:    "---\ntitle: Tagged\nstatus: draft\ntags:\n  - api\n  - backend\n---\n\nBody",
+			wantTitle:  "Tagged",
+			wantStatus: "draft",
+			wantTags:   []string{"api", "backend"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			title, status := ParseFrontmatter(tt.content)
+			title, status, tags := ParseFrontmatter(tt.content)
 			if title != tt.wantTitle {
 				t.Errorf("title = %q, want %q", title, tt.wantTitle)
 			}
 			if status != tt.wantStatus {
 				t.Errorf("status = %q, want %q", status, tt.wantStatus)
 			}
+			if len(tt.wantTags) == 0 {
+				if len(tags) != 0 {
+					t.Errorf("tags = %v, want empty", tags)
+				}
+			} else {
+				if fmt.Sprintf("%v", tags) != fmt.Sprintf("%v", tt.wantTags) {
+					t.Errorf("tags = %v, want %v", tags, tt.wantTags)
+				}
+			}
 		})
 	}
 }
 
 func TestBuildPayload(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	archDir := filepath.Join(baseDir, ".archcore", "vision")
-	os.MkdirAll(archDir, 0o755)
+	if err := os.MkdirAll(archDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	content := "---\ntitle: ADR 001\nstatus: draft\n---\n\n# ADR 001"
-	os.WriteFile(filepath.Join(archDir, "adr-001.md"), []byte(content), 0o644)
+	if err := os.WriteFile(filepath.Join(archDir, "adr-001.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	entries := []DiffEntry{
 		{RelPath: "vision/adr-001.md", Action: ActionCreated, Hash: "abc"},
@@ -117,10 +140,15 @@ func TestBuildPayload(t *testing.T) {
 }
 
 func TestBuildPayload_Modified(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	archDir := filepath.Join(baseDir, ".archcore", "vision")
-	os.MkdirAll(archDir, 0o755)
-	os.WriteFile(filepath.Join(archDir, "doc.md"), []byte("# Doc"), 0o644)
+	if err := os.MkdirAll(archDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(archDir, "doc.md"), []byte("# Doc"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	entries := []DiffEntry{
 		{RelPath: "vision/doc.md", Action: ActionModified, Hash: "def"},
@@ -140,8 +168,11 @@ func TestBuildPayload_Modified(t *testing.T) {
 }
 
 func TestBuildPayload_MissingFile(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
-	os.MkdirAll(filepath.Join(baseDir, ".archcore"), 0o755)
+	if err := os.MkdirAll(filepath.Join(baseDir, ".archcore"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	entries := []DiffEntry{
 		{RelPath: "vision/nonexistent.md", Action: ActionCreated, Hash: "abc"},
@@ -154,6 +185,7 @@ func TestBuildPayload_MissingFile(t *testing.T) {
 }
 
 func TestBuildPayload_EmptyEntries(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	payload, err := BuildPayload(baseDir, nil)
 	if err != nil {
@@ -165,6 +197,7 @@ func TestBuildPayload_EmptyEntries(t *testing.T) {
 }
 
 func TestBuildPayload_AllUnchanged(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	entries := []DiffEntry{
 		{RelPath: "vision/a.md", Action: ActionUnchanged, Hash: "aaa"},
@@ -181,6 +214,7 @@ func TestBuildPayload_AllUnchanged(t *testing.T) {
 }
 
 func TestBuildPayload_InvalidStatus(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		status  string
@@ -232,7 +266,9 @@ func TestBuildPayload_InvalidStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			baseDir := t.TempDir()
 			archDir := filepath.Join(baseDir, ".archcore", "knowledge")
-			os.MkdirAll(archDir, 0o755)
+			if err := os.MkdirAll(archDir, 0o755); err != nil {
+				t.Fatal(err)
+			}
 
 			var content string
 			if tt.status != "" {
@@ -240,7 +276,9 @@ func TestBuildPayload_InvalidStatus(t *testing.T) {
 			} else {
 				content = "---\ntitle: Test Doc\n---\n\n# Body"
 			}
-			os.WriteFile(filepath.Join(archDir, "test.md"), []byte(content), 0o644)
+			if err := os.WriteFile(filepath.Join(archDir, "test.md"), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
 
 			entries := []DiffEntry{
 				{RelPath: "knowledge/test.md", Action: tt.action, Hash: "abc123"},
@@ -270,6 +308,7 @@ func TestBuildPayload_InvalidStatus(t *testing.T) {
 }
 
 func TestBuildPayload_PathTraversal(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	entries := []DiffEntry{
 		{RelPath: "../../etc/passwd", Action: ActionCreated, Hash: "abc"},
@@ -285,6 +324,7 @@ func TestBuildPayload_PathTraversal(t *testing.T) {
 }
 
 func TestBuildPayload_DocTypeAndCategory(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name         string
 		relPath      string
@@ -333,10 +373,14 @@ func TestBuildPayload_DocTypeAndCategory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			baseDir := t.TempDir()
 			absDir := filepath.Join(baseDir, ".archcore", filepath.Dir(tt.relPath))
-			os.MkdirAll(absDir, 0o755)
+			if err := os.MkdirAll(absDir, 0o755); err != nil {
+				t.Fatal(err)
+			}
 
 			content := "---\ntitle: Test\nstatus: draft\n---\n\n# Body"
-			os.WriteFile(filepath.Join(baseDir, ".archcore", tt.relPath), []byte(content), 0o644)
+			if err := os.WriteFile(filepath.Join(baseDir, ".archcore", tt.relPath), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
 
 			entries := []DiffEntry{
 				{RelPath: tt.relPath, Action: ActionCreated, Hash: "abc123"},
@@ -363,12 +407,17 @@ func TestBuildPayload_DocTypeAndCategory(t *testing.T) {
 }
 
 func TestBuildPayload_ModifiedDocTypeAndCategory(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
 	archDir := filepath.Join(baseDir, ".archcore", "auth")
-	os.MkdirAll(archDir, 0o755)
+	if err := os.MkdirAll(archDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	content := "---\ntitle: JWT Strategy\nstatus: accepted\n---\n\n# JWT"
-	os.WriteFile(filepath.Join(archDir, "jwt.adr.md"), []byte(content), 0o644)
+	if err := os.WriteFile(filepath.Join(archDir, "jwt.adr.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	entries := []DiffEntry{
 		{RelPath: "auth/jwt.adr.md", Action: ActionModified, Hash: "def456"},
@@ -393,11 +442,16 @@ func TestBuildPayload_ModifiedDocTypeAndCategory(t *testing.T) {
 }
 
 func TestBuildPayload_FileAtRoot(t *testing.T) {
+	t.Parallel()
 	baseDir := t.TempDir()
-	os.MkdirAll(filepath.Join(baseDir, ".archcore"), 0o755)
+	if err := os.MkdirAll(filepath.Join(baseDir, ".archcore"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	content := "---\ntitle: Root Doc\nstatus: draft\n---\n\n# Root"
-	os.WriteFile(filepath.Join(baseDir, ".archcore", "root-doc.adr.md"), []byte(content), 0o644)
+	if err := os.WriteFile(filepath.Join(baseDir, ".archcore", "root-doc.adr.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	entries := []DiffEntry{
 		{RelPath: "root-doc.adr.md", Action: ActionCreated, Hash: "abc"},
@@ -419,5 +473,99 @@ func TestBuildPayload_FileAtRoot(t *testing.T) {
 	}
 	if payload.Created[0].Category != "knowledge" {
 		t.Errorf("Category = %q, want %q", payload.Created[0].Category, "knowledge")
+	}
+}
+
+func TestParseFrontmatter_WithTags(t *testing.T) {
+	t.Parallel()
+	content := "---\ntitle: Tagged\nstatus: draft\ntags:\n  - frontend\n  - auth\n---\n\nBody"
+	title, status, tags := ParseFrontmatter(content)
+	if title != "Tagged" {
+		t.Errorf("title = %q, want %q", title, "Tagged")
+	}
+	if status != "draft" {
+		t.Errorf("status = %q, want %q", status, "draft")
+	}
+	if len(tags) != 2 || tags[0] != "frontend" || tags[1] != "auth" {
+		t.Errorf("tags = %v, want [frontend auth]", tags)
+	}
+}
+
+func TestParseFrontmatter_WithoutTags(t *testing.T) {
+	t.Parallel()
+	content := "---\ntitle: No Tags\nstatus: accepted\n---\n\nBody"
+	title, status, tags := ParseFrontmatter(content)
+	if title != "No Tags" {
+		t.Errorf("title = %q, want %q", title, "No Tags")
+	}
+	if status != "accepted" {
+		t.Errorf("status = %q, want %q", status, "accepted")
+	}
+	if tags != nil {
+		t.Errorf("tags = %v, want nil", tags)
+	}
+}
+
+func TestBuildPayload_WithTags(t *testing.T) {
+	t.Parallel()
+	baseDir := t.TempDir()
+	archDir := filepath.Join(baseDir, ".archcore", "knowledge")
+	if err := os.MkdirAll(archDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	content := "---\ntitle: Tagged Doc\nstatus: draft\ntags:\n  - auth\n  - backend\n---\n\n# Body"
+	if err := os.WriteFile(filepath.Join(archDir, "tagged.adr.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	entries := []DiffEntry{
+		{RelPath: "knowledge/tagged.adr.md", Action: ActionCreated, Hash: "abc"},
+	}
+
+	payload, err := BuildPayload(baseDir, entries)
+	if err != nil {
+		t.Fatalf("BuildPayload: %v", err)
+	}
+
+	if len(payload.Created) != 1 {
+		t.Fatalf("got %d created, want 1", len(payload.Created))
+	}
+	created := payload.Created[0]
+	if len(created.Frontmatter.Tags) != 2 {
+		t.Fatalf("tags = %v, want 2 tags", created.Frontmatter.Tags)
+	}
+	if created.Frontmatter.Tags[0] != "auth" || created.Frontmatter.Tags[1] != "backend" {
+		t.Errorf("tags = %v, want [auth backend]", created.Frontmatter.Tags)
+	}
+}
+
+func TestBuildPayload_WithoutTags(t *testing.T) {
+	t.Parallel()
+	baseDir := t.TempDir()
+	archDir := filepath.Join(baseDir, ".archcore", "knowledge")
+	if err := os.MkdirAll(archDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	content := "---\ntitle: No Tags\nstatus: draft\n---\n\n# Body"
+	if err := os.WriteFile(filepath.Join(archDir, "notags.adr.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	entries := []DiffEntry{
+		{RelPath: "knowledge/notags.adr.md", Action: ActionCreated, Hash: "abc"},
+	}
+
+	payload, err := BuildPayload(baseDir, entries)
+	if err != nil {
+		t.Fatalf("BuildPayload: %v", err)
+	}
+
+	if len(payload.Created) != 1 {
+		t.Fatalf("got %d created, want 1", len(payload.Created))
+	}
+	if payload.Created[0].Frontmatter.Tags != nil {
+		t.Errorf("tags = %v, want nil", payload.Created[0].Frontmatter.Tags)
 	}
 }

@@ -3,6 +3,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
 
 	"archcore-cli/internal/sync"
 
@@ -42,14 +45,17 @@ func HandleGetDocument(baseDir string) func(ctx context.Context, request mcp.Cal
 		}
 
 		// Validate path safety.
-		path, errMsg := validateArchcorePath(path)
-		if errMsg != "" {
-			return errorResult(errMsg), nil
+		path, err = validateArchcorePath(path)
+		if err != nil {
+			return errorResult(err.Error()), nil
 		}
 
 		doc, err := ReadDocumentContent(baseDir, path)
 		if err != nil {
-			return errorResult("document not found: " + path), nil
+			if errors.Is(err, fs.ErrNotExist) {
+				return errorResult("document not found: " + path), nil
+			}
+			return nil, fmt.Errorf("reading %s: %w", path, err)
 		}
 
 		enriched := EnrichedDocument{LocalDocument: doc}
@@ -74,7 +80,7 @@ func HandleGetDocument(baseDir string) func(ctx context.Context, request mcp.Cal
 
 		data, err := json.Marshal(enriched)
 		if err != nil {
-			return errorResult("marshaling result: " + err.Error()), nil
+			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
 		return &mcp.CallToolResult{

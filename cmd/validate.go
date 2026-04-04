@@ -7,11 +7,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
+	"archcore-cli/internal/mcp/tools"
 	"archcore-cli/internal/sync"
 	"archcore-cli/templates"
 
@@ -59,19 +59,13 @@ func runValidateChecks(baseDir string, fix bool) int {
 	}
 
 	issues := 0
-	issues += checkStructure(baseDir)
+	fmt.Println(display.CheckLine(".archcore/ exists"))
 	issues += checkFiles(baseDir)
+	docs, scanErr := tools.ScanDocuments(baseDir)
+	issues += checkTagHygiene(docs, scanErr)
 	issues += checkManifest(baseDir, fix)
 	return issues
 }
-
-func checkStructure(baseDir string) int {
-	fmt.Println(display.CheckLine(".archcore/ exists"))
-	return 0
-}
-
-var slugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
-
 
 func checkFiles(baseDir string) int {
 	issues := 0
@@ -80,7 +74,10 @@ func checkFiles(baseDir string) int {
 	walkErr := templates.WalkArchcoreFiles(archcoreDir, func(path string, d fs.DirEntry) error {
 		name := d.Name()
 
-		relPath, _ := filepath.Rel(baseDir, path)
+		relPath, err := filepath.Rel(baseDir, path)
+		if err != nil {
+			relPath = path
+		}
 		relPath = filepath.ToSlash(relPath)
 
 		issues += checkNaming(relPath, name)
@@ -117,7 +114,7 @@ func checkNaming(relPath, filename string) int {
 	}
 
 	slug := strings.Join(parts[:len(parts)-1], ".")
-	if !slugRe.MatchString(slug) {
+	if !templates.SlugRe.MatchString(slug) {
 		issues++
 		fmt.Println(display.FailLine(fmt.Sprintf("%s: slug must be lowercase alphanumeric with hyphens", relPath)))
 		fmt.Println(display.HintLine("example: my-feature"))
@@ -131,7 +128,9 @@ func checkFrontmatter(absPath, relPath string) int {
 
 	data, err := os.ReadFile(absPath)
 	if err != nil {
-		return 0
+		issues++
+		fmt.Println(display.FailLine(fmt.Sprintf("%s: cannot read file: %v", relPath, err)))
+		return issues
 	}
 	content := string(data)
 
@@ -172,12 +171,38 @@ func checkFrontmatter(absPath, relPath string) int {
 		}
 	}
 
-	// Check meta is a mapping if present.
-	if meta, ok := fm["meta"]; ok {
-		if _, isMap := meta.(map[string]any); !isMap {
-			issues++
-			fmt.Println(display.FailLine(fmt.Sprintf("%s: \"meta\" must be an object (YAML mapping)", relPath)))
+	return issues
+}
+
+func checkTagHygiene(docs []tools.LocalDocument, scanErr error) int {
+	issues := 0
+	if scanErr != nil {
+		issues++
+		fmt.Println(display.FailLine(fmt.Sprintf("error scanning documents for tag check: %v", scanErr)))
+		return issues
+	}
+
+	tagCount := make(map[string]int)
+	for _, doc := range docs {
+		for _, tag := range doc.Tags {
+			if !templates.TagRe.MatchString(tag) {
+				issues++
+				fmt.Println(display.FailLine(fmt.Sprintf("%s: invalid tag %q", doc.Path, tag)))
+				continue
+			}
+			tagCount[tag]++
 		}
+	}
+
+	// Warn about singleton tags (possible typos).
+	for tag, count := range tagCount {
+		if count == 1 {
+			fmt.Println(display.WarnLine(fmt.Sprintf("tag %q is used only once (possible typo)", tag)))
+		}
+	}
+
+	if issues == 0 {
+		fmt.Println(display.CheckLine(fmt.Sprintf("Tag hygiene OK (%d unique tag(s))", len(tagCount))))
 	}
 
 	return issues
@@ -252,11 +277,11 @@ func checkDanglingRelations(baseDir string, relations []sync.Relation) []string 
 	var issues []string
 	for _, rel := range relations {
 		srcPath := filepath.Join(baseDir, ".archcore", rel.Source)
-		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+		if _, err := os.Stat(srcPath); errors.Is(err, fs.ErrNotExist) {
 			issues = append(issues, fmt.Sprintf("relation source %q does not exist on disk", rel.Source))
 		}
 		tgtPath := filepath.Join(baseDir, ".archcore", rel.Target)
-		if _, err := os.Stat(tgtPath); os.IsNotExist(err) {
+		if _, err := os.Stat(tgtPath); errors.Is(err, fs.ErrNotExist) {
 			issues = append(issues, fmt.Sprintf("relation target %q does not exist on disk", rel.Target))
 		}
 	}

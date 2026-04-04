@@ -3,6 +3,8 @@ package tools
 import (
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	"archcore-cli/templates"
@@ -377,5 +379,132 @@ func TestExtractSlug(t *testing.T) {
 				t.Errorf("ExtractSlug(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestValidateTags(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		tags    []string
+		wantErr bool
+		errHint string
+	}{
+		{name: "valid tags", tags: []string{"frontend", "auth", "team-platform"}, wantErr: false},
+		{name: "colon separator", tags: []string{"team:payments"}, wantErr: false},
+		{name: "pipe separator", tags: []string{"some|flag"}, wantErr: false},
+		{name: "underscore", tags: []string{"snake_case"}, wantErr: false},
+		{name: "uppercase with underscore hint", tags: []string{"Payment_Team"}, wantErr: true, errHint: "payment_team"},
+		{name: "complex tag", tags: []string{"team:frontend|web"}, wantErr: false},
+		{name: "uppercase hint", tags: []string{"Frontend"}, wantErr: true, errHint: "did you mean"},
+		{name: "digit start", tags: []string{"1invalid"}, wantErr: true},
+		{name: "single char", tags: []string{"a"}, wantErr: false},
+		{name: "hyphen only", tags: []string{"-"}, wantErr: true},
+		{name: "empty tag", tags: []string{""}, wantErr: true},
+		{name: "space in tag", tags: []string{"has space"}, wantErr: true},
+		{name: "uppercase letters", tags: []string{"UPPER"}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateTags(tt.tags)
+			if tt.wantErr && err == nil {
+				t.Errorf("expected error for tags %v", tt.tags)
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if tt.errHint != "" && err != nil && !strings.Contains(err.Error(), tt.errHint) {
+				t.Errorf("error %q should contain %q", err.Error(), tt.errHint)
+			}
+		})
+	}
+}
+
+func TestNormalizeTags(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		tags []string
+		want []string
+	}{
+		{name: "sort", tags: []string{"z", "a", "m"}, want: []string{"a", "m", "z"}},
+		{name: "dedup", tags: []string{"a", "b", "a"}, want: []string{"a", "b"}},
+		{name: "nil input", tags: nil, want: nil},
+		{name: "empty input", tags: []string{}, want: nil},
+		{name: "single", tags: []string{"x"}, want: []string{"x"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := normalizeTags(tt.tags)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("normalizeTags(%v) = %v, want %v", tt.tags, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeTags_DoesNotMutateInput(t *testing.T) {
+	t.Parallel()
+	input := []string{"z", "a", "m"}
+	original := []string{"z", "a", "m"}
+	_ = normalizeTags(input)
+	if !reflect.DeepEqual(input, original) {
+		t.Errorf("normalizeTags mutated input: got %v, want %v", input, original)
+	}
+}
+
+func TestBuildDocumentFile_WithTags(t *testing.T) {
+	t.Parallel()
+	result := buildDocumentFile("Test Title", "draft", []string{"auth", "frontend"}, "## Body\nContent.")
+	if !strings.Contains(result, "tags:\n  - \"auth\"\n  - \"frontend\"\n") {
+		t.Errorf("expected YAML tags block, got:\n%s", result)
+	}
+	if !strings.Contains(result, `title: "Test Title"`) {
+		t.Error("missing title")
+	}
+	if !strings.Contains(result, "status: draft") {
+		t.Error("missing status")
+	}
+	if !strings.Contains(result, "## Body\nContent.") {
+		t.Error("missing body")
+	}
+
+	// No tags case.
+	noTags := buildDocumentFile("T", "draft", nil, "Body")
+	if strings.Contains(noTags, "tags:") {
+		t.Error("should not contain tags block when tags is nil")
+	}
+}
+
+func TestScanDocuments_WithTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "tagged.adr.md", "---\ntitle: Tagged\nstatus: draft\ntags:\n  - auth\n  - backend\n---\n\nbody")
+
+	docs, err := ScanDocuments(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(docs) != 1 {
+		t.Fatalf("expected 1 doc, got %d", len(docs))
+	}
+	if !reflect.DeepEqual(docs[0].Tags, []string{"auth", "backend"}) {
+		t.Errorf("tags = %v, want [auth backend]", docs[0].Tags)
+	}
+}
+
+func TestReadDocumentContent_WithTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "tagged.adr.md", "---\ntitle: Tagged\nstatus: draft\ntags:\n  - frontend\n---\n\nbody")
+
+	doc, err := ReadDocumentContent(base, ".archcore/knowledge/tagged.adr.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(doc.Tags, []string{"frontend"}) {
+		t.Errorf("tags = %v, want [frontend]", doc.Tags)
 	}
 }

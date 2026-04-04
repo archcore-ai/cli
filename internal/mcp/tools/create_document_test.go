@@ -693,3 +693,99 @@ func TestHandleCreateDocument_NearbyDocuments_SameRoot(t *testing.T) {
 		t.Errorf("nearby_documents = %v, want to contain root-doc.adr.md", arr)
 	}
 }
+
+func TestHandleCreateDocument_WithTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleCreateDocument(base), map[string]any{
+		"type":     "adr",
+		"filename": "tagged-doc",
+		"title":    "Tagged Doc",
+		"tags":     []any{"frontend", "auth"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	// Verify tags in response JSON.
+	var info map[string]any
+	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &info); err != nil {
+		t.Fatal(err)
+	}
+	tags, ok := info["tags"]
+	if !ok {
+		t.Fatal("expected tags in response")
+	}
+	arr := tags.([]any)
+	if len(arr) != 2 {
+		t.Fatalf("expected 2 tags, got %d", len(arr))
+	}
+
+	// Verify tags in file.
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "tagged-doc.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "tags:\n  - \"auth\"\n  - \"frontend\"\n") {
+		t.Errorf("file missing tags block:\n%s", content)
+	}
+}
+
+func TestHandleCreateDocument_InvalidTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleCreateDocument(base), map[string]any{
+		"type":     "adr",
+		"filename": "bad-tags",
+		"tags":     []any{"Invalid_Tag"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for invalid tags")
+	}
+	text := result.Content[0].(mcp.TextContent).Text
+	if !strings.Contains(text, "invalid_tag") {
+		t.Errorf("error = %q, expected hint 'invalid_tag'", text)
+	}
+}
+
+func TestHandleCreateDocument_NoTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleCreateDocument(base), map[string]any{
+		"type":     "adr",
+		"filename": "no-tags",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	var info map[string]any
+	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &info); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := info["tags"]; ok {
+		t.Error("should not include tags key when no tags provided")
+	}
+
+	// Verify file has no tags block.
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "no-tags.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "tags:") {
+		t.Error("file should not contain tags block")
+	}
+}

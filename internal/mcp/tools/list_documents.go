@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -20,7 +19,7 @@ Call this tool FIRST before reading or creating any document. Use it to:
 - Get valid file paths required by get_document
 - Browse what documentation is available by type, category, or status
 
-Returns: a JSON array of documents, each with path, title, type, category, and status. Returns an empty array if no documents match.
+Returns: a JSON array of documents, each with path, title, type, category, status, and tags (when present). Returns an empty array if no documents match.
 
 Use the returned paths directly as input to get_document. Do not construct paths manually.`),
 		mcp.WithArray("types",
@@ -34,6 +33,10 @@ Use the returned paths directly as input to get_document. Do not construct paths
 		mcp.WithString("status",
 			mcp.Description("Filter by frontmatter status field. Valid values: draft, accepted, rejected."),
 			mcp.Enum("draft", "accepted", "rejected"),
+		),
+		mcp.WithArray("tags",
+			mcp.Description("Filter by tags. Returns documents that have at least one of the specified tags (OR semantics)."),
+			mcp.WithStringItems(),
 		),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title:        "List Documents",
@@ -53,6 +56,12 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 		types := request.GetStringSlice("types", nil)
 		category := request.GetString("category", "")
 		status := request.GetString("status", "")
+		filterTags := request.GetStringSlice("tags", nil)
+		if len(filterTags) > 0 {
+			if err := validateTags(filterTags); err != nil {
+				return errorResult(err.Error()), nil
+			}
+		}
 
 		var filtered []LocalDocument
 		for _, doc := range docs {
@@ -62,7 +71,10 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 			if category != "" && doc.Category != category {
 				continue
 			}
-			if status != "" && !strings.EqualFold(doc.Status, status) {
+			if status != "" && doc.Status != status { // exact match: enum constraint guarantees lowercase
+				continue
+			}
+			if len(filterTags) > 0 && !hasAnyTag(doc.Tags, filterTags) {
 				continue
 			}
 			filtered = append(filtered, doc)
@@ -70,15 +82,20 @@ func HandleListDocuments(baseDir string) func(ctx context.Context, request mcp.C
 
 		data, err := json.Marshal(filtered)
 		if err != nil {
-			return errorResult("marshaling result: " + err.Error()), nil
+			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }
 
-func errorResult(msg string) *mcp.CallToolResult {
-	return mcp.NewToolResultError(msg)
+// hasAnyTag returns true if docTags contains at least one of filterTags (OR semantics).
+func hasAnyTag(docTags, filterTags []string) bool {
+	for _, ft := range filterTags {
+		if slices.Contains(docTags, ft) {
+			return true
+		}
+	}
+	return false
 }
+

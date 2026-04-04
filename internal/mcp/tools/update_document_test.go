@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -343,5 +344,195 @@ func TestHandleUpdateDocument_RootLevelDoc(t *testing.T) {
 	}
 	if info["status"] != "accepted" {
 		t.Errorf("status = %q, want %q", info["status"], "accepted")
+	}
+}
+
+const testDocWithTags = "---\ntitle: Original Title\nstatus: draft\ntags:\n  - backend\n  - infra\n---\n\n## Context\nOriginal body."
+
+func TestHandleUpdateDocument_AddTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDoc)
+
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path": ".archcore/knowledge/my-adr.adr.md",
+		"tags": []any{"frontend", "auth"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "knowledge", "my-adr.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "tags:\n  - \"auth\"\n  - \"frontend\"\n") {
+		t.Errorf("expected tags block, got:\n%s", content)
+	}
+	if !strings.Contains(content, "Original body.") {
+		t.Error("body should be preserved")
+	}
+}
+
+func TestHandleUpdateDocument_ReplaceTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDocWithTags)
+
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path": ".archcore/knowledge/my-adr.adr.md",
+		"tags": []any{"new-tag"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "knowledge", "my-adr.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "tags:\n  - \"new-tag\"\n") {
+		t.Errorf("expected new tags, got:\n%s", content)
+	}
+	if strings.Contains(content, "backend") || strings.Contains(content, "infra") {
+		t.Error("old tags should be removed")
+	}
+}
+
+func TestHandleUpdateDocument_ClearTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDocWithTags)
+
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path": ".archcore/knowledge/my-adr.adr.md",
+		"tags": []any{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "knowledge", "my-adr.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if strings.Contains(content, "tags:") {
+		t.Errorf("expected no tags block after clearing, got:\n%s", content)
+	}
+}
+
+func TestHandleUpdateDocument_PreserveTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDocWithTags)
+
+	// Update only the title, tags should be preserved.
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path":  ".archcore/knowledge/my-adr.adr.md",
+		"title": "New Title",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	data, err := os.ReadFile(filepath.Join(base, ".archcore", "knowledge", "my-adr.adr.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "tags:\n  - \"backend\"\n  - \"infra\"\n") {
+		t.Errorf("expected existing tags to be preserved, got:\n%s", content)
+	}
+	if !strings.Contains(content, `title: "New Title"`) {
+		t.Error("title should be updated")
+	}
+}
+
+func TestHandleUpdateDocument_InvalidTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDoc)
+
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path": ".archcore/knowledge/my-adr.adr.md",
+		"tags": []any{"INVALID"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for invalid tags")
+	}
+}
+
+func TestHandleUpdateDocument_ReadPermissionError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping permission test on Windows")
+	}
+	if os.Getuid() == 0 {
+		t.Skip("skipping permission test as root")
+	}
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDoc)
+
+	path := filepath.Join(base, ".archcore", "knowledge", "my-adr.adr.md")
+	if err := os.Chmod(path, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(path, 0o644) })
+
+	_, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path":  ".archcore/knowledge/my-adr.adr.md",
+		"title": "New Title",
+	})
+	if err == nil {
+		t.Error("expected system error for unreadable file, got nil")
+	}
+}
+
+func TestHandleUpdateDocument_TagsOnly(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "my-adr.adr.md", testDoc)
+
+	// Provide only tags — should be accepted as a valid update.
+	result, err := callTool(HandleUpdateDocument(base), map[string]any{
+		"path": ".archcore/knowledge/my-adr.adr.md",
+		"tags": []any{"new-tag"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content[0].(mcp.TextContent).Text)
+	}
+
+	var info map[string]any
+	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &info); err != nil {
+		t.Fatal(err)
+	}
+	tagsVal, ok := info["tags"]
+	if !ok {
+		t.Fatal("expected tags in response")
+	}
+	arr := tagsVal.([]any)
+	if len(arr) != 1 || arr[0] != "new-tag" {
+		t.Errorf("tags = %v, want [new-tag]", arr)
 	}
 }

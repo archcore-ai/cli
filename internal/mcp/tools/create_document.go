@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"archcore-cli/internal/sync"
@@ -14,8 +13,6 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
-
-var slugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
 // NewCreateDocumentTool returns the tool definition for create_document.
 func NewCreateDocumentTool() mcp.Tool {
@@ -64,7 +61,7 @@ Document types and when to use each:
   srs       — Software requirements specification (ISO 29148 §9.6): formalized software component requirements
                 § required sections: Purpose and Scope, Product Perspective (incl. Assumptions/Dependencies), Software Requirements, External Interfaces, Data Requirements, Usability Requirements, Performance, Design Constraints, Software Quality Attributes, Verification Matrix, Traceability
 
-Returns: JSON with path, type, category, title, status, and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
+Returns: JSON with path, type, category, title, status, tags (when present), and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
 		mcp.WithString("type",
 			mcp.Description("Document type. Choose based on the nature of the content, not the topic. If uncertain between adr and rfc: use adr only if the decision is already final."),
 			mcp.Required(),
@@ -88,6 +85,10 @@ If you provide content, you MUST include the required sections for the chosen ty
 		),
 		mcp.WithString("directory",
 			mcp.Description(`Optional subdirectory inside .archcore/ where the file should be created. Use to organize documents by domain, feature, or team (e.g. "auth", "payments", "infrastructure/k8s"). If omitted, the file is created in the .archcore/ root. Must not contain ".." or start with "/".`),
+		),
+		mcp.WithArray("tags",
+			mcp.Description(`Optional. Add tags when the document is relevant to multiple teams or domains. Lowercase alphanumeric with hyphens, underscores, colons, or pipes (e.g. "frontend", "team-platform", "team:payments", "some|flag").`),
+			mcp.WithStringItems(),
 		),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title:           "Create Document",
@@ -120,7 +121,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 		if strings.ContainsAny(filename, "/\\") {
 			return errorResult(fmt.Sprintf("invalid filename %q: must not contain path separators", filename)), nil
 		}
-		if !slugRe.MatchString(filename) {
+		if !templates.SlugRe.MatchString(filename) {
 			return errorResult(fmt.Sprintf("invalid filename %q: must be lowercase alphanumeric with hyphens (e.g. \"use-postgres\")", filename)), nil
 		}
 
@@ -146,6 +147,11 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			directory = filepath.ToSlash(cleaned)
 		}
 
+		tags, tagErr := parseTags(request.GetStringSlice("tags", nil))
+		if tagErr != nil {
+			return errorResult(tagErr.Error()), nil
+		}
+
 		category := templates.CategoryForType(templates.DocumentType(docType))
 
 		// Build target directory: .archcore/<directory>/ or .archcore/ root.
@@ -161,12 +167,8 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 
 		outputFile := filepath.Join(dir, filename+"."+docType+".md")
 
-		var relPath string
-		if directory != "" {
-			relPath = ".archcore/" + directory + "/" + filename + "." + docType + ".md"
-		} else {
-			relPath = ".archcore/" + filename + "." + docType + ".md"
-		}
+		relPath, _ := filepath.Rel(baseDir, outputFile)
+		relPath = filepath.ToSlash(relPath)
 
 		if _, err := os.Stat(outputFile); err == nil {
 			return errorResult(fmt.Sprintf("file already exists: %s", relPath)), nil
@@ -179,7 +181,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			body = stripFrontmatter(body)
 		}
 
-		fileContent := buildDocumentFile(title, status, body)
+		fileContent := buildDocumentFile(title, status, tags, body)
 
 		if err := os.WriteFile(outputFile, []byte(fileContent), 0o644); err != nil {
 			return nil, fmt.Errorf("writing %s: %w", relPath, err)
@@ -192,6 +194,9 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			"title":    title,
 			"status":   status,
 		}
+		if len(tags) > 0 {
+			result["tags"] = tags
+		}
 
 		addNearbyRelations(baseDir, relPath, result)
 
@@ -200,9 +205,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }
 

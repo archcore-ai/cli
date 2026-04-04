@@ -3,6 +3,8 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -126,5 +128,109 @@ func TestHandleListDocuments_FilterByStatus(t *testing.T) {
 	}
 	if docs[0].Status != "accepted" {
 		t.Errorf("status = %q, want accepted", docs[0].Status)
+	}
+}
+
+func TestHandleListDocuments_FilterByTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.adr.md", "---\ntitle: A\nstatus: draft\ntags:\n  - frontend\n  - auth\n---\n")
+	writeDoc(t, base, "knowledge", "b.rfc.md", "---\ntitle: B\nstatus: draft\ntags:\n  - backend\n---\n")
+	writeDoc(t, base, "vision", "c.prd.md", "---\ntitle: C\nstatus: draft\n---\n")
+
+	result, err := callTool(HandleListDocuments(base), map[string]any{
+		"tags": []any{"frontend"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var docs []LocalDocument
+	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &docs); err != nil {
+		t.Fatal(err)
+	}
+	if len(docs) != 1 {
+		t.Fatalf("expected 1, got %d", len(docs))
+	}
+	if docs[0].Type != "adr" {
+		t.Errorf("type = %q, want adr", docs[0].Type)
+	}
+
+	// OR semantics: either tag matches.
+	result2, err := callTool(HandleListDocuments(base), map[string]any{
+		"tags": []any{"frontend", "backend"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var docs2 []LocalDocument
+	if err := json.Unmarshal([]byte(result2.Content[0].(mcp.TextContent).Text), &docs2); err != nil {
+		t.Fatal(err)
+	}
+	if len(docs2) != 2 {
+		t.Fatalf("expected 2 (OR semantics), got %d", len(docs2))
+	}
+}
+
+func TestHandleListDocuments_InvalidFilterTags(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+
+	result, err := callTool(HandleListDocuments(base), map[string]any{
+		"tags": []any{"INVALID"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.IsError {
+		t.Error("expected error for invalid filter tags")
+	}
+}
+
+func TestHandleListDocuments_ScanError(t *testing.T) {
+	t.Parallel()
+	if os.Getuid() == 0 {
+		t.Skip("cannot test permission errors as root")
+	}
+	base := t.TempDir()
+	archcoreDir := filepath.Join(base, ".archcore")
+	subDir := filepath.Join(archcoreDir, "noperm")
+	if err := os.MkdirAll(subDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(subDir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(subDir, 0o755) })
+
+	_, err := callTool(HandleListDocuments(base), nil)
+	if err == nil {
+		t.Fatal("expected error when scan fails due to permissions")
+	}
+}
+
+func TestHandleListDocuments_TagsAndTypeFilter(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.adr.md", "---\ntitle: A\nstatus: draft\ntags:\n  - frontend\n---\n")
+	writeDoc(t, base, "knowledge", "b.rfc.md", "---\ntitle: B\nstatus: draft\ntags:\n  - frontend\n---\n")
+
+	result, err := callTool(HandleListDocuments(base), map[string]any{
+		"types": []any{"adr"},
+		"tags":  []any{"frontend"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var docs []LocalDocument
+	if err := json.Unmarshal([]byte(result.Content[0].(mcp.TextContent).Text), &docs); err != nil {
+		t.Fatal(err)
+	}
+	if len(docs) != 1 {
+		t.Fatalf("expected 1 (type+tag filter), got %d", len(docs))
+	}
+	if docs[0].Type != "adr" {
+		t.Errorf("type = %q, want adr", docs[0].Type)
 	}
 }

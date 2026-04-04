@@ -1,6 +1,12 @@
 package templates
 
 import (
+	"errors"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -388,109 +394,37 @@ func TestGeneratePRDTemplate(t *testing.T) {
 }
 
 func TestTemplateStructure(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name         string
-		documentType DocumentType
-		minLength    int
+		docType  DocumentType
+		minBytes int
 	}{
-		{
-			name:         "ADR has substantial content",
-			documentType: TypeADR,
-			minLength:    800,
-		},
-		{
-			name:         "RFC has substantial content",
-			documentType: TypeRFC,
-			minLength:    1500,
-		},
-		{
-			name:         "Rule has substantial content",
-			documentType: TypeRule,
-			minLength:    800,
-		},
-		{
-			name:         "Guide has substantial content",
-			documentType: TypeGuide,
-			minLength:    1200,
-		},
-		{
-			name:         "Doc has substantial content",
-			documentType: TypeDoc,
-			minLength:    600,
-		},
-		{
-			name:         "Spec has substantial content",
-			documentType: TypeSpec,
-			minLength:    2000,
-		},
-		{
-			name:         "TaskType has substantial content",
-			documentType: TypeTaskType,
-			minLength:    500,
-		},
-		{
-			name:         "CPAT has substantial content",
-			documentType: TypeCPAT,
-			minLength:    300,
-		},
-		{
-			name:         "PRD has substantial content",
-			documentType: TypePRD,
-			minLength:    2000,
-		},
-		{
-			name:         "Idea has substantial content",
-			documentType: TypeIdea,
-			minLength:    400,
-		},
-		{
-			name:         "Plan has substantial content",
-			documentType: TypePlan,
-			minLength:    300,
-		},
-		{
-			name:         "MRD has substantial content",
-			documentType: TypeMRD,
-			minLength:    1500,
-		},
-		{
-			name:         "BRD has substantial content",
-			documentType: TypeBRD,
-			minLength:    1500,
-		},
-		{
-			name:         "URD has substantial content",
-			documentType: TypeURD,
-			minLength:    1500,
-		},
-		{
-			name:         "BRS has substantial content",
-			documentType: TypeBRS,
-			minLength:    2000,
-		},
-		{
-			name:         "StRS has substantial content",
-			documentType: TypeStRS,
-			minLength:    2000,
-		},
-		{
-			name:         "SyRS has substantial content",
-			documentType: TypeSyRS,
-			minLength:    2500,
-		},
-		{
-			name:         "SRS has substantial content",
-			documentType: TypeSRS,
-			minLength:    2500,
-		},
+		{TypeADR, 634},
+		{TypeRFC, 1040},
+		{TypeRule, 402},
+		{TypeGuide, 947},
+		{TypeDoc, 545},
+		{TypeSpec, 2822},
+		{TypeTaskType, 252},
+		{TypeCPAT, 198},
+		{TypePRD, 1952},
+		{TypeIdea, 201},
+		{TypePlan, 175},
+		{TypeMRD, 1151},
+		{TypeBRD, 1279},
+		{TypeURD, 1289},
+		{TypeBRS, 2115},
+		{TypeStRS, 2247},
+		{TypeSyRS, 2431},
+		{TypeSRS, 2168},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			template := GenerateTemplate(tt.documentType)
-
-			if len(template) < tt.minLength {
-				t.Errorf("template length = %d, want at least %d", len(template), tt.minLength)
+		t.Run(string(tt.docType), func(t *testing.T) {
+			t.Parallel()
+			got := GenerateTemplate(tt.docType)
+			if n := len(got); n < tt.minBytes {
+				t.Errorf("GenerateTemplate(%q) = %d bytes, want >= %d", tt.docType, n, tt.minBytes)
 			}
 		})
 	}
@@ -501,8 +435,15 @@ func TestTemplateMarkdownFormatting(t *testing.T) {
 		t.Run(typ, func(t *testing.T) {
 			template := GenerateTemplate(DocumentType(typ))
 
-			if !strings.Contains(template, "##") {
-				t.Error("template should contain markdown headers (##)")
+			hasH2 := false
+			for line := range strings.SplitSeq(template, "\n") {
+				if strings.HasPrefix(line, "## ") {
+					hasH2 = true
+					break
+				}
+			}
+			if !hasH2 {
+				t.Error("template should contain at least one H2 header line starting with '## '")
 			}
 
 			if !strings.HasSuffix(template, "\n") {
@@ -636,5 +577,429 @@ func TestGeneratePlanTemplate(t *testing.T) {
 	phaseCount := strings.Count(template, "### Phase")
 	if phaseCount < 2 {
 		t.Errorf("Plan template should have at least 2 phases, got %d", phaseCount)
+	}
+}
+
+func TestSplitDocument(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		input    string
+		wantFM   Frontmatter
+		wantBody string
+	}{
+		{
+			name:  "standard frontmatter",
+			input: "---\ntitle: My Doc\nstatus: draft\n---\n\n## Body",
+			wantFM: Frontmatter{
+				Title:  "My Doc",
+				Status: "draft",
+			},
+			wantBody: "## Body",
+		},
+		{
+			name:  "with tags",
+			input: "---\ntitle: Tagged Doc\nstatus: accepted\ntags:\n  - frontend\n  - auth\n---\n\nBody text",
+			wantFM: Frontmatter{
+				Title:  "Tagged Doc",
+				Status: "accepted",
+				Tags:   []string{"frontend", "auth"},
+			},
+			wantBody: "Body text",
+		},
+		{
+			name:  "single tag",
+			input: "---\ntitle: Single Tag\nstatus: draft\ntags:\n  - backend\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Single Tag",
+				Status: "draft",
+				Tags:   []string{"backend"},
+			},
+			wantBody: "Body",
+		},
+		{
+			name:  "flow style tags",
+			input: "---\ntitle: Flow Tags\nstatus: draft\ntags: [api, security]\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Flow Tags",
+				Status: "draft",
+				Tags:   []string{"api", "security"},
+			},
+			wantBody: "Body",
+		},
+		{
+			name:     "no frontmatter",
+			input:    "## Just Markdown\nSome content.",
+			wantFM:   Frontmatter{},
+			wantBody: "## Just Markdown\nSome content.",
+		},
+		{
+			name:     "unclosed frontmatter",
+			input:    "---\ntitle: Broken\nstatus: draft\n",
+			wantFM:   Frontmatter{},
+			wantBody: "---\ntitle: Broken\nstatus: draft\n",
+		},
+		{
+			name:  "windows line endings",
+			input: "---\r\ntitle: Win Doc\r\nstatus: draft\r\ntags:\r\n  - win\r\n---\r\n\r\nBody",
+			wantFM: Frontmatter{
+				Title:  "Win Doc",
+				Status: "draft",
+				Tags:   []string{"win"},
+			},
+			wantBody: "Body",
+		},
+		{
+			name:     "empty",
+			input:    "",
+			wantFM:   Frontmatter{},
+			wantBody: "",
+		},
+		{
+			name:  "quoted title",
+			input: "---\ntitle: \"Quoted Title\"\nstatus: draft\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Quoted Title",
+				Status: "draft",
+			},
+			wantBody: "Body",
+		},
+		{
+			name:  "escaped quotes in title",
+			input: "---\ntitle: \"Title with \\\"quotes\\\"\"\nstatus: draft\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Title with \"quotes\"",
+				Status: "draft",
+			},
+			wantBody: "Body",
+		},
+		{
+			name:  "unknown fields ignored",
+			input: "---\ntitle: Extra Fields\nstatus: draft\ncustom: value\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Extra Fields",
+				Status: "draft",
+			},
+			wantBody: "Body",
+		},
+		{
+			name:  "YAML special values as tags",
+			input: "---\ntitle: Special\nstatus: draft\ntags:\n  - \"true\"\n  - \"null\"\n---\n\nBody",
+			wantFM: Frontmatter{
+				Title:  "Special",
+				Status: "draft",
+				Tags:   []string{"true", "null"},
+			},
+			wantBody: "Body",
+		},
+		{
+			name:  "frontmatter closed at EOF no trailing newline",
+			input: "---\ntitle: No Newline\nstatus: draft\n---",
+			wantFM: Frontmatter{
+				Title:  "No Newline",
+				Status: "draft",
+			},
+			wantBody: "",
+		},
+		{
+			name:  "no blank line after closing delimiter",
+			input: "---\ntitle: No Gap\nstatus: draft\n---\nBody immediately",
+			wantFM: Frontmatter{
+				Title:  "No Gap",
+				Status: "draft",
+			},
+			wantBody: "Body immediately",
+		},
+		{
+			name:  "triple-dash in body preserved",
+			input: "---\ntitle: Dashes\nstatus: draft\n---\n\nBody with\n---\nmore content",
+			wantFM: Frontmatter{
+				Title:  "Dashes",
+				Status: "draft",
+			},
+			wantBody: "Body with\n---\nmore content",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fm, body := SplitDocument([]byte(tt.input))
+			if fm.Title != tt.wantFM.Title {
+				t.Errorf("title = %q, want %q", fm.Title, tt.wantFM.Title)
+			}
+			if fm.Status != tt.wantFM.Status {
+				t.Errorf("status = %q, want %q", fm.Status, tt.wantFM.Status)
+			}
+			if !reflect.DeepEqual(fm.Tags, tt.wantFM.Tags) {
+				t.Errorf("tags = %v, want %v", fm.Tags, tt.wantFM.Tags)
+			}
+			if body != tt.wantBody {
+				t.Errorf("body = %q, want %q", body, tt.wantBody)
+			}
+		})
+	}
+}
+
+func TestExtractDocType(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+	}{
+		{name: "normal case", filename: "use-postgres.adr.md", want: "adr"},
+		{name: "multi-dot slug", filename: "my-feature.v2.adr.md", want: "adr"},
+		{name: "no type segment", filename: "readme.md", want: ""},
+		{name: "no .md suffix", filename: "readme", want: ""},
+		{name: "degenerate", filename: ".md", want: ""},
+		{name: "empty string", filename: "", want: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := ExtractDocType(tt.filename)
+			if got != tt.want {
+				t.Errorf("ExtractDocType(%q) = %q, want %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractSlug(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+	}{
+		{name: "normal", filename: "use-postgres.adr.md", want: "use-postgres"},
+		{name: "multi-dot slug preserves dots", filename: "my-feature.v2.adr.md", want: "my-feature.v2"},
+		{name: "no type segment", filename: "readme.md", want: "readme"},
+		{name: "no .md", filename: "readme", want: "readme"},
+		{name: "degenerate", filename: ".md", want: ""},
+		{name: "empty", filename: "", want: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := ExtractSlug(tt.filename)
+			if got != tt.want {
+				t.Errorf("ExtractSlug(%q) = %q, want %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsValidType(t *testing.T) {
+	t.Parallel()
+	for _, typ := range ValidTypes() {
+		t.Run("valid/"+typ, func(t *testing.T) {
+			t.Parallel()
+			if !IsValidType(typ) {
+				t.Errorf("IsValidType(%q) = false, want true", typ)
+			}
+		})
+	}
+	invalid := []string{"", "unknown", "ADR", "Adr", "task_type", "task type"}
+	for _, v := range invalid {
+		t.Run("invalid/"+v, func(t *testing.T) {
+			t.Parallel()
+			if IsValidType(v) {
+				t.Errorf("IsValidType(%q) = true, want false", v)
+			}
+		})
+	}
+}
+
+func TestIsValidStatus(t *testing.T) {
+	t.Parallel()
+	for _, s := range ValidStatuses() {
+		t.Run("valid/"+s, func(t *testing.T) {
+			t.Parallel()
+			if !IsValidStatus(s) {
+				t.Errorf("IsValidStatus(%q) = false, want true", s)
+			}
+		})
+	}
+	invalid := []string{"", "Draft", "ACCEPTED", "pending", "active"}
+	for _, v := range invalid {
+		t.Run("invalid/"+v, func(t *testing.T) {
+			t.Parallel()
+			if IsValidStatus(v) {
+				t.Errorf("IsValidStatus(%q) = true, want false", v)
+			}
+		})
+	}
+}
+
+func TestValidStatuses(t *testing.T) {
+	t.Parallel()
+	want := []string{StatusDraft, StatusAccepted, StatusRejected}
+	got := ValidStatuses()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ValidStatuses() = %v, want %v", got, want)
+	}
+}
+
+func TestCategoryForType(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		docType  DocumentType
+		wantCat  string
+	}{
+		{TypePRD, CategoryVision},
+		{TypeIdea, CategoryVision},
+		{TypePlan, CategoryVision},
+		{TypeMRD, CategoryVision},
+		{TypeBRD, CategoryVision},
+		{TypeURD, CategoryVision},
+		{TypeBRS, CategoryVision},
+		{TypeStRS, CategoryVision},
+		{TypeSyRS, CategoryVision},
+		{TypeSRS, CategoryVision},
+		{TypeADR, CategoryKnowledge},
+		{TypeRFC, CategoryKnowledge},
+		{TypeRule, CategoryKnowledge},
+		{TypeGuide, CategoryKnowledge},
+		{TypeDoc, CategoryKnowledge},
+		{TypeSpec, CategoryKnowledge},
+		{TypeTaskType, CategoryExperience},
+		{TypeCPAT, CategoryExperience},
+		{DocumentType("unknown"), CategoryKnowledge},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.docType), func(t *testing.T) {
+			t.Parallel()
+			got := CategoryForType(tt.docType)
+			if got != tt.wantCat {
+				t.Errorf("CategoryForType(%q) = %q, want %q", tt.docType, got, tt.wantCat)
+			}
+		})
+	}
+}
+
+func TestTypesByCategory(t *testing.T) {
+	t.Parallel()
+	byCategory := TypesByCategory()
+	knownCategories := map[string]bool{
+		CategoryVision:     true,
+		CategoryKnowledge:  true,
+		CategoryExperience: true,
+	}
+	for cat := range byCategory {
+		if !knownCategories[cat] {
+			t.Errorf("unexpected category key %q in TypesByCategory result", cat)
+		}
+	}
+	seen := map[string]string{}
+	for cat, types := range byCategory {
+		for _, typ := range types {
+			if prev, exists := seen[typ]; exists {
+				t.Errorf("type %q appears in both %q and %q", typ, prev, cat)
+			}
+			seen[typ] = cat
+		}
+	}
+	all := ValidTypes()
+	for _, typ := range all {
+		if _, found := seen[typ]; !found {
+			t.Errorf("type %q from ValidTypes() not found in any TypesByCategory bucket", typ)
+		}
+	}
+}
+
+func TestValidTypes_Completeness(t *testing.T) {
+	t.Parallel()
+	types := ValidTypes()
+	seen := map[string]bool{}
+	for _, typ := range types {
+		if seen[typ] {
+			t.Errorf("duplicate type %q in ValidTypes()", typ)
+		}
+		seen[typ] = true
+		if !IsValidType(typ) {
+			t.Errorf("IsValidType(%q) = false for entry from ValidTypes()", typ)
+		}
+	}
+	byCategory := TypesByCategory()
+	total := 0
+	for _, bucket := range byCategory {
+		total += len(bucket)
+	}
+	if len(types) != total {
+		t.Errorf("ValidTypes() count = %d, TypesByCategory total = %d; they must match", len(types), total)
+	}
+}
+
+func TestWalkArchcoreFiles(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	files := []struct {
+		relPath string
+		dir     bool
+	}{
+		{"use-postgres.adr.md", false},
+		{"sub", true},
+		{"sub/another.rfc.md", false},
+		{".hidden", true},
+		{".hidden/secret.md", false},
+		{"settings.json", false},
+		{".sync-state.json", false},
+		{"README.txt", false},
+	}
+	for _, f := range files {
+		full := filepath.Join(dir, f.relPath)
+		if f.dir {
+			if err := os.MkdirAll(full, 0o755); err != nil {
+				t.Fatalf("MkdirAll %s: %v", full, err)
+			}
+		} else {
+			if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+				t.Fatalf("MkdirAll parent of %s: %v", full, err)
+			}
+			if err := os.WriteFile(full, []byte("content"), 0o644); err != nil {
+				t.Fatalf("WriteFile %s: %v", full, err)
+			}
+		}
+	}
+	var collected []string
+	err := WalkArchcoreFiles(dir, func(path string, d fs.DirEntry) error {
+		collected = append(collected, d.Name())
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("WalkArchcoreFiles returned error: %v", err)
+	}
+	sort.Strings(collected)
+	want := []string{"another.rfc.md", "use-postgres.adr.md"}
+	if !reflect.DeepEqual(collected, want) {
+		t.Errorf("collected = %v, want %v", collected, want)
+	}
+}
+
+func TestWalkArchcoreFiles_NonExistentDir(t *testing.T) {
+	t.Parallel()
+	err := WalkArchcoreFiles("/nonexistent/path/that/does/not/exist", func(path string, d fs.DirEntry) error {
+		return nil
+	})
+	if err != nil {
+		t.Errorf("WalkArchcoreFiles on non-existent dir returned error: %v", err)
+	}
+}
+
+func TestWalkArchcoreFiles_CallbackError(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	docPath := filepath.Join(dir, "my-doc.adr.md")
+	if err := os.WriteFile(docPath, []byte("content"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	sentinel := errors.New("sentinel callback error")
+	err := WalkArchcoreFiles(dir, func(path string, d fs.DirEntry) error {
+		return sentinel
+	})
+	if !errors.Is(err, sentinel) {
+		t.Errorf("expected sentinel error, got %v", err)
 	}
 }

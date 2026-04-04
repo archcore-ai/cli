@@ -4,8 +4,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strconv"
+	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type DocumentType string
@@ -42,6 +44,19 @@ const (
 	StatusAccepted = "accepted"
 	StatusRejected = "rejected"
 )
+
+// TagRe validates a single tag: lowercase alphanumeric with hyphens, underscores, colons, and pipes.
+var TagRe = regexp.MustCompile(`^[a-z][a-z0-9_:|-]*$`)
+
+// SlugRe validates a document slug: lowercase alphanumeric segments separated by hyphens.
+var SlugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+
+// Frontmatter holds the parsed YAML frontmatter fields of a document.
+type Frontmatter struct {
+	Title  string   `yaml:"title"`
+	Status string   `yaml:"status"`
+	Tags   []string `yaml:"tags"`
+}
 
 // SkipFiles are non-document meta files that live in .archcore/ and should be
 // skipped during scanning, validation, and sync operations.
@@ -155,39 +170,34 @@ func ExtractSlug(filename string) string {
 }
 
 // SplitDocument splits raw document bytes into frontmatter fields and body.
-// It returns the title, status, and the markdown body after the closing "---".
-func SplitDocument(data []byte) (title, status, body string) {
+// It returns a Frontmatter struct and the markdown body after the closing "---".
+func SplitDocument(data []byte) (Frontmatter, string) {
 	s := strings.ReplaceAll(string(data), "\r\n", "\n")
 	if !strings.HasPrefix(s, "---\n") {
-		return "", "", s
+		return Frontmatter{}, s
 	}
 
 	end := strings.Index(s[4:], "\n---\n")
 	if end == -1 {
-		return "", "", s
+		// Handle frontmatter closed by "\n---" at EOF (no trailing newline).
+		if idx := strings.Index(s[4:], "\n---"); idx != -1 && idx+4+len("\n---") == len(s) {
+			fmContent := s[4 : 4+idx]
+			var fm Frontmatter
+			_ = yaml.Unmarshal([]byte(fmContent), &fm)
+			return fm, ""
+		}
+		return Frontmatter{}, s
 	}
 	end += 4 // adjust for the offset
 
-	frontmatter := s[4:end]
-	for _, line := range strings.Split(frontmatter, "\n") {
-		if strings.HasPrefix(line, "title: ") {
-			title = strings.TrimPrefix(line, "title: ")
-			// Remove surrounding quotes added by buildDocumentFile (%q).
-			if len(title) >= 2 && title[0] == '"' && title[len(title)-1] == '"' {
-				if unq, err := strconv.Unquote(title); err == nil {
-					title = unq
-				}
-			}
-		}
-		if strings.HasPrefix(line, "status: ") {
-			status = strings.TrimPrefix(line, "status: ")
-		}
-	}
+	fmContent := s[4:end]
+	var fm Frontmatter
+	_ = yaml.Unmarshal([]byte(fmContent), &fm)
 
-	body = s[end+5:] // skip past "\n---\n"
+	body := s[end+5:] // skip past "\n---\n"
 	body = strings.TrimPrefix(body, "\n")
 
-	return title, status, body
+	return fm, body
 }
 
 // WalkArchcoreFiles walks archcoreDir recursively, calling fn for each .md

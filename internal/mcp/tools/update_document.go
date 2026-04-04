@@ -3,7 +3,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,9 +24,9 @@ Before updating, confirm the intended changes with the user if possible.
 
 Call list_documents first to get the document's path, then pass that path to get_document to review current content before updating.
 
-You can update any combination of: title (frontmatter), status (frontmatter), content (markdown body). Fields not provided are left unchanged.
+You can update any combination of: title, status, content, or tags. Fields not provided are left unchanged. Pass an empty tags array to clear all tags.
 
-Returns: JSON with the path of the updated file, its type, category, title, and status.`),
+Returns: JSON with the path of the updated file, its type, category, title, status, and tags (when present).`),
 		mcp.WithString("path",
 			mcp.Description("Relative path to the document from the project root. Must be obtained from list_documents — do not construct this manually. Example: \".archcore/knowledge/use-postgres.adr.md\""),
 			mcp.Required(),
@@ -38,6 +40,10 @@ Returns: JSON with the path of the updated file, its type, category, title, and 
 		),
 		mcp.WithString("content",
 			mcp.Description("New markdown body for the document. Replaces everything after the frontmatter. If omitted, the existing body is preserved."),
+		),
+		mcp.WithArray("tags",
+			mcp.Description(`New tags for the document. Tags must be lowercase alphanumeric with hyphens, underscores, colons, or pipes (e.g. "frontend", "team-platform", "team:payments", "some|flag"). Pass an empty array to clear all tags. If omitted, existing tags are preserved.`),
+			mcp.WithStringItems(),
 		),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title:           "Update Document",
@@ -56,17 +62,29 @@ func HandleUpdateDocument(baseDir string) func(ctx context.Context, request mcp.
 		}
 
 		// Validate path.
-		relPath, errMsg := validateArchcorePath(relPath)
-		if errMsg != "" {
-			return errorResult(errMsg), nil
+		relPath, err = validateArchcorePath(relPath)
+		if err != nil {
+			return errorResult(err.Error()), nil
 		}
 
 		// Require at least one update field.
 		newTitle := request.GetString("title", "")
 		newStatus := request.GetString("status", "")
 		newContent := request.GetString("content", "")
-		if newTitle == "" && newStatus == "" && newContent == "" {
-			return errorResult("at least one of title, status, or content must be provided"), nil
+
+		var newTags []string
+		tagsProvided := false
+		if _, ok := request.GetArguments()["tags"]; ok {
+			tagsProvided = true
+			var tagErr error
+			newTags, tagErr = parseTags(request.GetStringSlice("tags", nil))
+			if tagErr != nil {
+				return errorResult(tagErr.Error()), nil
+			}
+		}
+
+		if newTitle == "" && newStatus == "" && newContent == "" && !tagsProvided {
+			return errorResult("at least one of title, status, content, or tags must be provided"), nil
 		}
 
 		if newStatus != "" && !templates.IsValidStatus(newStatus) {
@@ -77,18 +95,21 @@ func HandleUpdateDocument(baseDir string) func(ctx context.Context, request mcp.
 		absPath := filepath.Join(baseDir, relPath)
 		data, err := os.ReadFile(absPath)
 		if err != nil {
-			return errorResult(fmt.Sprintf("document not found: %s", relPath)), nil
+			if errors.Is(err, fs.ErrNotExist) {
+				return errorResult(fmt.Sprintf("document not found: %s", relPath)), nil
+			}
+			return nil, fmt.Errorf("reading %s: %w", relPath, err)
 		}
 
 		// Parse existing document.
-		existingTitle, existingStatus, existingBody := templates.SplitDocument(data)
+		existingFM, existingBody := templates.SplitDocument(data)
 
 		// Apply updates.
-		title := existingTitle
+		title := existingFM.Title
 		if newTitle != "" {
 			title = newTitle
 		}
-		status := existingStatus
+		status := existingFM.Status
 		if newStatus != "" {
 			status = newStatus
 		}
@@ -96,12 +117,17 @@ func HandleUpdateDocument(baseDir string) func(ctx context.Context, request mcp.
 		if newContent != "" {
 			body = stripFrontmatter(newContent)
 		}
+		tags := existingFM.Tags
+		if tagsProvided {
+			tags = newTags
+		}
+		tags = normalizeTags(tags)
 
 		// Reconstruct the file.
-		fileContent := buildDocumentFile(title, status, body)
+		fileContent := buildDocumentFile(title, status, tags, body)
 
 		if err := os.WriteFile(absPath, []byte(fileContent), 0o644); err != nil {
-			return errorResult(fmt.Sprintf("writing file: %v", err)), nil
+			return nil, fmt.Errorf("writing %s: %w", relPath, err)
 		}
 
 		// Derive category from document type, not directory.
@@ -116,13 +142,14 @@ func HandleUpdateDocument(baseDir string) func(ctx context.Context, request mcp.
 			"title":    title,
 			"status":   status,
 		}
+		if len(tags) > 0 {
+			result["tags"] = tags
+		}
 		jsonData, err := json.Marshal(result)
 		if err != nil {
-			return errorResult(fmt.Sprintf("marshaling result: %v", err)), nil
+			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(jsonData))},
-		}, nil
+		return mcp.NewToolResultText(string(jsonData)), nil
 	}
 }

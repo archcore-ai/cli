@@ -10,7 +10,7 @@ import (
 
 var mcpServerInstructions = `You are working with a project that uses Archcore — Git-native context for AI coding agents.
 
-The .archcore/ directory contains Markdown files with YAML frontmatter (title, status). The directory structure inside .archcore/ is free-form — you can organize documents by domain, feature, team, or any custom structure. Categories (vision, knowledge, experience) are virtual — derived automatically from the document type in the filename (slug.type.md), not from the physical directory.
+The .archcore/ directory contains Markdown files with YAML frontmatter (title, status, tags). The directory structure inside .archcore/ is free-form — you can organize documents by domain, feature, team, or any custom structure. Categories (vision, knowledge, experience) are virtual — derived automatically from the document type in the filename (slug.type.md), not from the physical directory.
 
 Example structures:
   .archcore/auth/jwt-strategy.adr.md         → virtual category: knowledge
@@ -34,6 +34,13 @@ Documents can be linked with directed relations stored in the sync manifest.
 
   After creating a document, check the nearby_documents hint in the response.
   Use add_relation to link related documents. Use list_relations to see existing links.
+
+TAGS:
+Use tags when a document is relevant to multiple teams or domains.
+  Format: lowercase alphanumeric with hyphens, underscores, colons, or pipes (e.g., "frontend", "team-platform", "team:payments", "some|flag")
+  Tag filtering uses OR semantics — a document matches if it has any of the specified tags.
+  Tags narrow results but don't guarantee completeness — combine with type/category filters.
+  If a tag-filtered query returns 0 results, retry without the tag filter.
 
 PATH FORMAT: All tool paths use ".archcore/<path>/<slug>.<type>.md" as returned by list_documents. The add_relation and remove_relation tools also accept paths without the ".archcore/" prefix.
 

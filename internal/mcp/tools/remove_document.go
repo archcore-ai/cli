@@ -3,7 +3,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -54,21 +56,24 @@ func HandleRemoveDocument(baseDir string) func(ctx context.Context, request mcp.
 		}
 
 		// Validate path.
-		relPath, errMsg := validateArchcorePath(relPath)
-		if errMsg != "" {
-			return errorResult(errMsg), nil
+		relPath, err = validateArchcorePath(relPath)
+		if err != nil {
+			return errorResult(err.Error()), nil
 		}
 
 		// Read file metadata before deletion.
 		doc, err := ReadDocumentContent(baseDir, relPath)
 		if err != nil {
-			return errorResult(fmt.Sprintf("document not found: %s", relPath)), nil
+			if errors.Is(err, fs.ErrNotExist) {
+				return errorResult(fmt.Sprintf("document not found: %s", relPath)), nil
+			}
+			return nil, fmt.Errorf("reading %s: %w", relPath, err)
 		}
 
 		// Delete the file.
 		absPath := filepath.Join(baseDir, relPath)
 		if err := os.Remove(absPath); err != nil {
-			return errorResult(fmt.Sprintf("removing file: %v", err)), nil
+			return nil, fmt.Errorf("removing %s: %w", relPath, err)
 		}
 
 		// Clean up relations from manifest.
@@ -94,7 +99,7 @@ func HandleRemoveDocument(baseDir string) func(ctx context.Context, request mcp.
 		}
 		jsonData, err := json.Marshal(result)
 		if err != nil {
-			return errorResult(fmt.Sprintf("marshaling result: %v", err)), nil
+			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
 		return &mcp.CallToolResult{

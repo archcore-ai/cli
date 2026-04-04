@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"archcore-cli/internal/mcp/tools"
@@ -43,6 +44,36 @@ func buildSessionContext(baseDir string) (string, int) {
 			}
 			fmt.Fprintf(&b, "    - %s%s\n", doc.Filename, titlePart)
 		}
+	}
+
+	// Aggregate tag frequencies and emit top tags.
+	tagFreq := make(map[string]int)
+	for _, doc := range docs {
+		for _, tag := range doc.Tags {
+			tagFreq[tag]++
+		}
+	}
+	if len(tagFreq) > 0 {
+		type tagCount struct {
+			tag   string
+			count int
+		}
+		sorted := make([]tagCount, 0, len(tagFreq))
+		for tag, count := range tagFreq {
+			sorted = append(sorted, tagCount{tag, count})
+		}
+		sort.Slice(sorted, func(i, j int) bool {
+			if sorted[i].count != sorted[j].count {
+				return sorted[i].count > sorted[j].count
+			}
+			return sorted[i].tag < sorted[j].tag
+		})
+		limit := min(30, len(sorted))
+		tags := make([]string, limit)
+		for i := range limit {
+			tags[i] = sorted[i].tag
+		}
+		fmt.Fprintf(&b, "\nEXISTING TAGS: %s\n", strings.Join(tags, ", "))
 	}
 
 	// Document relations summary.

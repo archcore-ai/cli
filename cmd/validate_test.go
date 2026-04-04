@@ -192,29 +192,6 @@ func TestValidate_MissingStatus(t *testing.T) {
 	}
 }
 
-func TestValidate_MetaAsScalar(t *testing.T) {
-	dir := initValidDir(t)
-	writeDoc(t, dir, "knowledge", "my-doc.adr.md", "---\ntitle: Hello\nstatus: draft\nmeta: not-a-map\n---\n")
-
-	out, err := runValidateInDir(t, dir)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(out, "must be an object") {
-		t.Errorf("expected 'must be an object', got: %s", out)
-	}
-}
-
-func TestValidate_ValidMeta(t *testing.T) {
-	dir := initValidDir(t)
-	writeDoc(t, dir, "knowledge", "my-doc.adr.md", "---\ntitle: Hello\nstatus: draft\nmeta:\n  key: value\n---\n")
-
-	_, err := runValidateInDir(t, dir)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
-}
-
 func TestValidate_NoManifestFile(t *testing.T) {
 	dir := initValidDir(t)
 	out, err := runValidateInDir(t, dir)
