@@ -462,6 +462,36 @@
       "source": "document-types/add-rnd-research-document-type.idea.md",
       "target": "document-types/writing-spec-documents.guide.md",
       "type": "related"
+    },
+    {
+      "source": "mcp/no-list-tags-tool.adr.md",
+      "target": "mcp/no-absolute-paths-in-mcp-errors.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/tag-update-semantics.rule.md",
+      "target": "mcp/no-absolute-paths-in-mcp-errors.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/tag-update-semantics.rule.md",
+      "target": "mcp/no-list-tags-tool.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/no-list-tags-tool.adr.md",
+      "target": "mcp/tags-implementation.plan.md",
+      "type": "implements"
+    },
+    {
+      "source": "mcp/tag-update-semantics.rule.md",
+      "target": "mcp/tags-implementation.plan.md",
+      "type": "implements"
+    },
+    {
+      "source": "mcp/tag-update-semantics.rule.md",
+      "target": "cli/optional-settings-omit-defaults.rule.md",
+      "type": "related"
     }
   ]
 }

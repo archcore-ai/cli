@@ -1,6 +1,6 @@
 ---
 title: "Implementation Plan: Tags in Document Frontmatter"
-status: draft
+status: accepted
 ---
 
 ## Goal
@@ -14,7 +14,7 @@ Add optional `tags` field to document frontmatter enabling cross-cutting categor
 - **No `list_tags` MCP tool** — tags surface via `list_documents` filter + session context injection at session start. Rationale: avoids tool proliferation (9→8 tools), eliminates redundant filesystem scan, session context already provides tag discoverability.
 - **Reject invalid tags** with error + "did you mean?" hint. No silent normalization. Explicit is better than implicit.
 - **Hybrid YAML parsing** — keep existing `---` delimiter detection, use `yaml.v3` (already a dependency) for frontmatter block parsing. Avoids hand-rolling multiline YAML list parser.
-- **Flat tags, no namespaces** — format `^[a-z][a-z0-9-]*$`, stored sorted + deduplicated. Namespaces deferred until concrete need arises.
+- **Flat tags** — format `^[a-z][a-z0-9_:|-]*$` (lowercase, hyphens, underscores, colons, pipes), stored sorted + deduplicated. Colons enable lightweight namespace-like conventions (e.g. `team:payments`) without enforced hierarchy.
 - **Session context** — top 30 tags by frequency, no counts, single compact line.
 - **OR semantics** for tag filtering in `list_documents` — document matches if it has at least one of the requested tags.
 
@@ -26,8 +26,8 @@ title: "E2E Auth Flow Testing"
 status: accepted
 tags:
   - frontend
-  - backend
-  - auth
+  - team:backend
+  - payment_flow
 ---
 ```
 
@@ -79,7 +79,8 @@ Tags are optional. When absent, field is omitted from JSON output (`omitempty`).
 ## Acceptance Criteria
 
 - Documents can be created/updated with tags via MCP tools
-- Invalid tags (uppercase, underscores, spaces) are rejected with actionable error
+- Invalid tags (uppercase, spaces) are rejected with actionable error
+- Tags support hyphens, underscores, colons, and pipes (`team-platform`, `payment_flow`, `team:payments`, `flag|beta`)
 - `list_documents(tags=["x"])` returns documents with OR matching
 - `list_documents(types=["rule"], tags=["frontend"])` combines filters correctly
 - Tags appear in `list_documents` and `get_document` responses
