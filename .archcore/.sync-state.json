@@ -497,6 +497,16 @@
       "source": "code-quality/go-code-quality.rule.md",
       "target": "cli-ui/building-the-cli.guide.md",
       "type": "related"
+    },
+    {
+      "source": "code-quality/e2e-testing-for-cli.idea.md",
+      "target": "code-quality/go-code-quality.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/e2e-testing-for-cli.idea.md",
+      "target": "code-quality/unit-testing-patterns.guide.md",
+      "type": "related"
     }
   ]
 }
