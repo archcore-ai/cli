@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"archcore-cli/internal/display"
-
 	"github.com/spf13/cobra"
+
+	"archcore-cli/internal/display"
 )
 
 var pseudoVersionSuffix = regexp.MustCompile(`\.0\.\d{14}-[0-9a-f]+$`)
@@ -70,10 +70,11 @@ func NewRootCmd(version string) *cobra.Command {
 		Version:       ver,
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Fprintln(cmd.OutOrStdout(), display.WelcomeBanner())
 			fmt.Fprintln(cmd.OutOrStdout())
 			_ = cmd.Usage()
+			return nil
 		},
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd: true,
@@ -97,7 +98,7 @@ func NewRootCmd(version string) *cobra.Command {
 		newInitCmd(),
 		newConfigCmd(),
 		newDoctorCmd(),
-		newValidateCmd(),
+		newStatusCmd(),
 		newHooksCmd(ver),
 		newMCPCmd(),
 		newSyncCmd(),

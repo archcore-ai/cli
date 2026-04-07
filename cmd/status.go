@@ -9,49 +9,46 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
+
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
 	"archcore-cli/internal/mcp/tools"
 	"archcore-cli/internal/sync"
 	"archcore-cli/templates"
-
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
-func newValidateCmd() *cobra.Command {
-	var fix bool
-	cmd := &cobra.Command{
-		Use:   "validate",
-		Short: "Validate .archcore/ structure and documents",
+func newStatusCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Check .archcore/ structure and document health",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
-				return err
+				return fmt.Errorf("getting working directory: %w", err)
 			}
-			issues := runValidate(cwd, fix)
+			issues := runStatus(cwd)
 			if issues > 0 {
 				return fmt.Errorf("%d issue(s) found", issues)
 			}
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&fix, "fix", false, "Automatically fix issues (e.g., remove orphaned relations)")
-	return cmd
 }
 
-// runValidate checks .archcore/ structure and documents. Returns issue count.
-func runValidate(baseDir string, fix bool) int {
-	issues := runValidateChecks(baseDir, fix)
+// runStatus checks .archcore/ structure and documents. Returns issue count.
+func runStatus(baseDir string) int {
+	issues := runStatusChecks(baseDir)
 	if issues > 0 {
 		fmt.Println(display.Warn.Render(fmt.Sprintf("  %d issue(s) found", issues)))
 	}
 	return issues
 }
 
-// runValidateChecks performs all validation checks without printing a summary.
-// It is used by both the validate and doctor commands.
-func runValidateChecks(baseDir string, fix bool) int {
+// runStatusChecks performs all read-only validation checks without printing a summary.
+// It is used by both the status and doctor commands.
+func runStatusChecks(baseDir string) int {
 	if !config.DirExists(baseDir) {
 		fmt.Println(display.FailLine(".archcore/ directory not found"))
 		fmt.Println(display.HintLine("Run 'archcore init' to set up"))
@@ -63,7 +60,7 @@ func runValidateChecks(baseDir string, fix bool) int {
 	issues += checkFiles(baseDir)
 	docs, scanErr := tools.ScanDocuments(baseDir)
 	issues += checkTagHygiene(docs, scanErr)
-	issues += checkManifest(baseDir, fix)
+	issues += checkManifest(baseDir)
 	return issues
 }
 
@@ -208,7 +205,7 @@ func checkTagHygiene(docs []tools.LocalDocument, scanErr error) int {
 	return issues
 }
 
-func checkManifest(baseDir string, fix bool) int {
+func checkManifest(baseDir string) int {
 	issues := 0
 	manifestPath := filepath.Join(baseDir, ".archcore", sync.ManifestFile)
 
@@ -241,23 +238,15 @@ func checkManifest(baseDir string, fix bool) int {
 			}
 
 			danglingIssues := checkDanglingRelations(baseDir, m.Relations)
-			if fix && len(danglingIssues) > 0 {
-				archcoreDir := filepath.Join(baseDir, ".archcore")
-				removed := m.CleanupRelations(archcoreDir)
-				if err := sync.SaveManifest(baseDir, &m); err != nil {
-					issues++
-					fmt.Println(display.FailLine(fmt.Sprintf("Failed to save manifest after cleanup: %v", err)))
-				} else {
-					fmt.Println(display.CheckLine(fmt.Sprintf("Removed %d orphaned relation(s)", removed)))
-				}
-			} else {
-				for _, issue := range danglingIssues {
-					issues++
-					fmt.Println(display.FailLine(fmt.Sprintf("Sync manifest: %s", issue)))
-				}
+			for _, issue := range danglingIssues {
+				issues++
+				fmt.Println(display.FailLine(fmt.Sprintf("Sync manifest: %s", issue)))
+			}
+			if len(danglingIssues) > 0 {
+				fmt.Println(display.HintLine("Run 'archcore doctor --fix' to remove orphaned relations"))
 			}
 
-			if len(semIssues) == 0 && (len(danglingIssues) == 0 || fix) {
+			if len(semIssues) == 0 && len(danglingIssues) == 0 {
 				fmt.Println(display.CheckLine(fmt.Sprintf("Sync manifest valid (%d file(s) tracked, %d relation(s))", len(m.Files), len(m.Relations))))
 			}
 		} else {
@@ -271,6 +260,33 @@ func checkManifest(baseDir string, fix bool) int {
 	}
 
 	return issues
+}
+
+// fixManifest removes orphaned relations from the sync manifest.
+// Returns the number of relations removed and any error.
+func fixManifest(baseDir string) (int, error) {
+	manifestPath := filepath.Join(baseDir, ".archcore", sync.ManifestFile)
+
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return 0, nil // no manifest — nothing to fix
+	}
+
+	var m sync.Manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		return 0, nil // corrupt manifest — checkManifest will report it
+	}
+
+	archcoreDir := filepath.Join(baseDir, ".archcore")
+	removed := m.CleanupRelations(archcoreDir)
+	if removed == 0 {
+		return 0, nil
+	}
+
+	if err := sync.SaveManifest(baseDir, &m); err != nil {
+		return 0, fmt.Errorf("failed to save manifest after cleanup: %w", err)
+	}
+	return removed, nil
 }
 
 func checkDanglingRelations(baseDir string, relations []sync.Relation) []string {

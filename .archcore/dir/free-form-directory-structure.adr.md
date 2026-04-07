@@ -63,7 +63,7 @@ The `slug.type.md` naming convention is the sole source of category information.
 - `CategoryForType()` in `templates/templates.go` handles the type → category mapping
 - File scanning uses `filepath.WalkDir` recursively instead of scanning three fixed directories
 - Hidden directories (`.`-prefixed) and meta files (`settings.json`, `.sync-state.json`) are skipped during scanning
-- `archcore validate` checks filename format and type validity across all directories
+- `archcore status` checks filename format and type validity across all directories
 
 ## References
 

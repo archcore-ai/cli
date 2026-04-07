@@ -256,8 +256,8 @@ Relations are stored in `.sync-state.json` and managed automatically by the AI a
 | Command | Description |
 |---------|-------------|
 | `archcore init` | Initialize `.archcore/` directory interactively |
-| `archcore doctor` | Run diagnostic checks on your setup |
-| `archcore validate` | Validate document structure and frontmatter |
+| `archcore doctor` | Check your archcore setup and fix issues |
+| `archcore status` | Check .archcore/ structure and document health |
 | `archcore config` | View or modify settings |
 | `archcore hooks install` | Install hooks for detected AI agents |
 | `archcore update` | Update Archcore to the latest version |
@@ -351,7 +351,7 @@ go test ./cmd/ -run TestConfigCmd
 ### Project Structure
 
 ```text
-├── cmd/              # Cobra commands (init, doctor, config, validate, hooks, mcp, ...)
+├── cmd/              # Cobra commands (init, doctor, config, status, hooks, mcp, ...)
 ├── internal/
 │   ├── agents/       # Supported AI agents with hooks/MCP capabilities
 │   ├── api/          # HTTP client for archcore server

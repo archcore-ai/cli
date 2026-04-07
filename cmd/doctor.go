@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"archcore-cli/internal/api"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
-
-	"github.com/spf13/cobra"
 )
 
 func newDoctorCmd() *cobra.Command {
-	return &cobra.Command{
+	var fix bool
+	cmd := &cobra.Command{
 		Use:   "doctor",
-		Short: "Check your archcore setup for issues",
+		Short: "Check your archcore setup and fix issues",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -23,16 +24,31 @@ func newDoctorCmd() *cobra.Command {
 
 			cwd, err := os.Getwd()
 			if err != nil {
-				return err
+				return fmt.Errorf("getting working directory: %w", err)
 			}
 
-			// Run validation checks (structure + documents).
-			issues := runValidateChecks(cwd, false)
+			issues := 0
+
+			// Fix issues before checking (only when --fix is passed).
+			if fix {
+				removed, err := fixManifest(cwd)
+				if err != nil {
+					issues++
+					fmt.Println(display.FailLine(err.Error()))
+				} else if removed > 0 {
+					fmt.Println(display.CheckLine(fmt.Sprintf("Removed %d orphaned relation(s)", removed)))
+				}
+			}
+
+			// Run status checks (structure + documents).
+			issues += runStatusChecks(cwd)
 
 			// Early return if .archcore/ doesn't exist — settings and
 			// server checks depend on it.
 			if !config.DirExists(cwd) {
-				return nil
+				fmt.Println()
+				fmt.Println(display.Warn.Render(fmt.Sprintf("  %d issue(s) found", issues)))
+				return fmt.Errorf("%d issue(s) found", issues)
 			}
 
 			// Settings file valid.
@@ -65,9 +81,12 @@ func newDoctorCmd() *cobra.Command {
 				fmt.Println(display.Success.Render("  All checks passed!"))
 			} else {
 				fmt.Println(display.Warn.Render(fmt.Sprintf("  %d issue(s) found", issues)))
+				return fmt.Errorf("%d issue(s) found", issues)
 			}
 
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&fix, "fix", false, "Automatically fix issues (e.g., remove orphaned relations)")
+	return cmd
 }

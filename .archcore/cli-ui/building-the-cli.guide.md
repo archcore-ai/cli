@@ -27,7 +27,7 @@ go test ./cmd/ -run TestX  # Run a specific test
 ```bash
 ./archcore init       # Interactive setup wizard (sync type, directories, settings)
 ./archcore doctor     # Health check: structure + settings + server connectivity
-./archcore validate   # Structural checks only (naming, frontmatter, categories)
+./archcore status     # Structural checks only (naming, frontmatter, categories)
 ./archcore update     # Self-update to the latest release
 ```
 

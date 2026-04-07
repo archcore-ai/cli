@@ -73,7 +73,7 @@ Decoupling category from directory path allows teams to organize documents by do
 
 ## Enforcement
 
-- `archcore validate` checks filename format and type validity for all `.md` files
+- `archcore status` checks filename format and type validity for all `.md` files
 - MCP `create_document` generates files with correct naming automatically
 - MCP `list_documents` uses `ExtractDocType()` and `CategoryForType()` to derive category from filename
 

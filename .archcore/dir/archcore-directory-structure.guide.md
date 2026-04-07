@@ -125,7 +125,7 @@ The old `vision/`, `knowledge/`, and `experience/` directories still work. They'
 - **Group by what you look up together.** If you often read auth decisions alongside auth guides, put them in `auth/`.
 - **Don't replicate categories as directories.** The category is already encoded in the type. A `knowledge/` directory adds no information.
 - **Nest sparingly.** One level of directories covers most use cases. Deep nesting makes paths long without adding clarity.
-- **Use `archcore validate`** to check all documents, or **MCP `list_documents`** to see documents with their virtual categories, regardless of directory layout.
+- **Use `archcore status`** to check all documents, or **MCP `list_documents`** to see documents with their virtual categories, regardless of directory layout.
 
 ## References
 
