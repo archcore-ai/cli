@@ -12,7 +12,7 @@ import (
 func TestRunMCPInstall_NoArchcoreDir(t *testing.T) {
 	t.Parallel()
 	base := t.TempDir()
-	err := runMCPInstall(base)
+	err := runMCPInstallForAgent(base, agents.ClaudeCode)
 	if err == nil {
 		t.Fatal("expected error without .archcore/")
 	}
@@ -25,8 +25,8 @@ func TestRunMCPInstall_FreshInstall(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runMCPInstall(base); err != nil {
-		t.Fatalf("runMCPInstall: %v", err)
+	if err := runMCPInstallForAgent(base, agents.ClaudeCode); err != nil {
+		t.Fatalf("runMCPInstallForAgent: %v", err)
 	}
 
 	data, err := os.ReadFile(filepath.Join(base, ".mcp.json"))
@@ -67,10 +67,10 @@ func TestRunMCPInstall_Idempotent(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runMCPInstall(base); err != nil {
+	if err := runMCPInstallForAgent(base, agents.ClaudeCode); err != nil {
 		t.Fatalf("first install: %v", err)
 	}
-	if err := runMCPInstall(base); err != nil {
+	if err := runMCPInstallForAgent(base, agents.ClaudeCode); err != nil {
 		t.Fatalf("second install: %v", err)
 	}
 
@@ -112,8 +112,8 @@ func TestRunMCPInstall_MergesExisting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := runMCPInstall(base); err != nil {
-		t.Fatalf("runMCPInstall: %v", err)
+	if err := runMCPInstallForAgent(base, agents.ClaudeCode); err != nil {
+		t.Fatalf("runMCPInstallForAgent: %v", err)
 	}
 
 	resultData, err := os.ReadFile(filepath.Join(base, ".mcp.json"))
@@ -174,8 +174,12 @@ func TestMCPInstall_AgentFlag_Invalid(t *testing.T) {
 func TestMCPInstall_AutoDetect(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
-	os.MkdirAll(filepath.Join(base, ".cursor"), 0o755)
-	os.MkdirAll(filepath.Join(base, ".roo"), 0o755)
+	if err := os.MkdirAll(filepath.Join(base, ".cursor"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .cursor: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(base, ".roo"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .roo: %v", err)
+	}
 
 	if err := runMCPInstallAutoDetect(base); err != nil {
 		t.Fatalf("runMCPInstallAutoDetect: %v", err)
@@ -189,26 +193,34 @@ func TestMCPInstall_AutoDetect(t *testing.T) {
 	}
 }
 
-func TestMCPInstall_NoAgents_DefaultClaudeCode(t *testing.T) {
-	t.Parallel()
+func TestMCPInstall_NoAgents_NoInstallInNonInteractive(t *testing.T) {
 	base := setupArchcoreDir(t)
+	origIsInteractive := isInteractive
+	isInteractive = func() bool { return false }
+	defer func() { isInteractive = origIsInteractive }()
 
 	if err := runMCPInstallAutoDetect(base); err != nil {
 		t.Fatalf("runMCPInstallAutoDetect: %v", err)
 	}
 
-	// .mcp.json should exist (Claude Code fallback).
-	if _, err := os.Stat(filepath.Join(base, ".mcp.json")); err != nil {
-		t.Error("expected .mcp.json to exist (Claude Code fallback)")
+	// No agent detected + non-interactive env → nothing should be installed.
+	if _, err := os.Stat(filepath.Join(base, ".mcp.json")); err == nil {
+		t.Error("expected no .mcp.json when no agent detected in non-interactive env")
 	}
 }
 
 func TestMCPInstall_MultipleAgents(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
-	os.MkdirAll(filepath.Join(base, ".claude"), 0o755)
-	os.MkdirAll(filepath.Join(base, ".gemini"), 0o755)
-	os.MkdirAll(filepath.Join(base, ".codex"), 0o755)
+	if err := os.MkdirAll(filepath.Join(base, ".claude"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .claude: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(base, ".gemini"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .gemini: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(base, ".codex"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .codex: %v", err)
+	}
 
 	if err := runMCPInstallAutoDetect(base); err != nil {
 		t.Fatalf("runMCPInstallAutoDetect: %v", err)

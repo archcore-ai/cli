@@ -65,6 +65,9 @@ func newMCPInstallCmd() *cobra.Command {
 
 // runMCPInstallForAgent installs MCP config for a specific agent.
 func runMCPInstallForAgent(baseDir string, id agents.AgentID) error {
+	if !config.DirExists(baseDir) {
+		return fmt.Errorf(".archcore/ not found — run 'archcore init' first")
+	}
 	agent := agents.ByID(id)
 	if agent == nil {
 		return fmt.Errorf("unknown agent %q — valid agents: %v", id, agents.AllIDs())
@@ -73,11 +76,15 @@ func runMCPInstallForAgent(baseDir string, id agents.AgentID) error {
 }
 
 // runMCPInstallAutoDetect detects agents and installs MCP config for all found.
-// Falls back to Claude Code if no agents detected.
+// If none detected, prompts the user to pick from supported agents.
 func runMCPInstallAutoDetect(baseDir string) error {
-	detected := agents.Detect(baseDir)
+	detected, err := resolveAgents(baseDir)
+	if err != nil {
+		return err
+	}
 	if len(detected) == 0 {
-		detected = []*agents.Agent{agents.ByID(agents.ClaudeCode)}
+		fmt.Println(display.Dim.Render("  No AI agent selected."))
+		return nil
 	}
 
 	for _, agent := range detected {
@@ -98,25 +105,8 @@ func installMCPForAgent(baseDir string, agent *agents.Agent) error {
 	if err := agent.WriteMCPConfig(baseDir); err != nil {
 		return err
 	}
-	configPath := ""
 	if agent.MCPConfigPath != nil {
-		configPath = agent.MCPConfigPath(baseDir)
-	}
-	if configPath != "" {
 		fmt.Println(display.CheckLine(fmt.Sprintf("Installed MCP config for %s", agent.DisplayName)))
 	}
 	return nil
-}
-
-// runMCPInstall is the legacy function for backward compatibility.
-// Used by runHooksInstall to also install MCP (Claude Code only).
-func runMCPInstall(baseDir string) error {
-	if !config.DirExists(baseDir) {
-		return fmt.Errorf(".archcore/ not found — run 'archcore init' first")
-	}
-	agent := agents.ByID(agents.ClaudeCode)
-	if agent == nil {
-		return fmt.Errorf("claude-code agent not found in registry")
-	}
-	return agent.WriteMCPConfig(baseDir)
 }

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"archcore-cli/internal/agents"
 )
 
 func TestGeminiCLIWriteHooksConfig_NewFile(t *testing.T) {
@@ -160,12 +162,12 @@ func TestGeminiCLIWriteHooksConfig_CorruptedJSON(t *testing.T) {
 	}
 }
 
-func TestGeminiCLIWriteHooksConfig_AlsoInstallsMCP(t *testing.T) {
+func TestRunHooksInstallForAgent_GeminiCLIAlsoInstallsMCP(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runGeminiCLIHooksInstall(base); err != nil {
-		t.Fatalf("runGeminiCLIHooksInstall: %v", err)
+	if err := runHooksInstallForAgent(base, agents.GeminiCLI); err != nil {
+		t.Fatalf("runHooksInstallForAgent: %v", err)
 	}
 
 	data, err := os.ReadFile(filepath.Join(base, ".gemini", "settings.json"))

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"archcore-cli/internal/agents"
 )
 
 func TestCursorWriteHooksConfig_NewFile(t *testing.T) {
@@ -155,12 +157,12 @@ func TestCursorWriteHooksConfig_CorruptedJSON(t *testing.T) {
 	}
 }
 
-func TestCursorWriteHooksConfig_AlsoInstallsMCP(t *testing.T) {
+func TestRunHooksInstallForAgent_CursorAlsoInstallsMCP(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runCursorHooksInstall(base); err != nil {
-		t.Fatalf("runCursorHooksInstall: %v", err)
+	if err := runHooksInstallForAgent(base, agents.Cursor); err != nil {
+		t.Fatalf("runHooksInstallForAgent: %v", err)
 	}
 
 	// .cursor/mcp.json should exist.

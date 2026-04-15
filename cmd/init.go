@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	// "strings" // re-enable with sync type selector
 
 	"archcore-cli/internal/agents"
 	"archcore-cli/internal/api"
@@ -15,9 +15,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var ErrServerUnreachable = errors.New("server unreachable")
+
+type serverUnreachableError struct {
+	url string
+	err error
+}
+
+func (e *serverUnreachableError) Error() string {
+	return fmt.Sprintf("cannot reach server at %s: %v", e.url, e.err)
+}
+
+func (e *serverUnreachableError) Unwrap() error {
+	return e.err
+}
+
+func (e *serverUnreachableError) Is(target error) bool {
+	return target == ErrServerUnreachable
+}
+
 type initResult struct {
 	serverReachable bool // only meaningful when ServerURL != ""
 }
+
+var isInteractive = defaultIsInteractive
 
 // runInit performs the init logic after prompts have been resolved.
 // settings is a fully constructed Settings value (from NewNoneSettings, etc.)
@@ -35,7 +56,7 @@ func runInit(ctx context.Context, baseDir string, settings *config.Settings) (*i
 	if serverURL := settings.ServerURL(); serverURL != "" {
 		client := api.NewClient(serverURL)
 		if err := client.CheckHealth(ctx); err != nil {
-			return result, fmt.Errorf("cannot reach server at %s: %w", serverURL, err)
+			return nil, &serverUnreachableError{url: serverURL, err: err}
 		}
 		result.serverReachable = true
 	}
@@ -65,6 +86,10 @@ func newInitCmd() *cobra.Command {
 					Value(&reinit).
 					Run()
 				if err != nil {
+					if errors.Is(err, huh.ErrUserAborted) {
+						fmt.Println(display.Dim.Render("  Cancelled."))
+						return nil
+					}
 					return err
 				}
 				if !reinit {
@@ -73,51 +98,14 @@ func newInitCmd() *cobra.Command {
 				}
 			}
 
-			// Sync is temporarily disabled — always use "none".
-			// To re-enable, uncomment the block below and remove the hardcoded line.
 			settings := config.NewNoneSettings()
 
-			// var syncType string
-			// err = huh.NewSelect[string]().
-			// 	Title("Select sync option").
-			// 	Options(
-			// 		huh.NewOption("No sync - store artifacts locally without remote synchronization", config.SyncTypeNone),
-			// 		huh.NewOption("Archcore On-Prem - sync with central context platform. Boost your MCP with smart Archcore GraphRAG", config.SyncTypeOnPrem),
-			// 	).
-			// 	Value(&syncType).
-			// 	Run()
-			// if err != nil {
-			// 	return err
-			// }
-			//
-			// var settings *config.Settings
-			// switch syncType {
-			// case config.SyncTypeNone:
-			// 	settings = config.NewNoneSettings()
-			// case config.SyncTypeCloud:
-			// 	settings = config.NewCloudSettings()
-			// case config.SyncTypeOnPrem:
-			// 	serverURL := "http://localhost:8080"
-			// 	err = huh.NewInput().
-			// 		Title("Archcore URL").
-			// 		Value(&serverURL).
-			// 		Run()
-			// 	if err != nil {
-			// 		return err
-			// 	}
-			// 	serverURL = strings.TrimRight(serverURL, "/")
-			// 	settings = config.NewOnPremSettings(serverURL)
-			// default:
-			// 	return fmt.Errorf("unsupported sync type: %q", syncType)
-			// }
-
 			result, err := runInit(ctx, cwd, settings)
-			if err != nil && result != nil {
-				// Server unreachable — soft fail
-				fmt.Println(display.FailLine(err.Error()))
-				return nil
-			}
 			if err != nil {
+				if errors.Is(err, ErrServerUnreachable) {
+					fmt.Println(display.FailLine(err.Error()))
+					return nil
+				}
 				return err
 			}
 
@@ -128,9 +116,13 @@ func newInitCmd() *cobra.Command {
 			fmt.Println(display.CheckLine("Settings saved to .archcore/settings.json"))
 
 			// Auto-detect agents and install hooks + MCP config for all found.
-			detected := agents.Detect(cwd)
+			// If none detected, ask the user to pick from supported agents.
+			detected, err := resolveAgents(cwd)
+			if err != nil {
+				return err
+			}
 			if len(detected) == 0 {
-				detected = []*agents.Agent{agents.ByID(agents.ClaudeCode)}
+				fmt.Println(display.Dim.Render("  No AI agent selected. Run 'archcore hooks install' or 'archcore mcp install' later."))
 			}
 			for _, agent := range detected {
 				if _, err := installHooksForAgent(cwd, agent); err != nil {
@@ -146,4 +138,61 @@ func newInitCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func resolveAgents(baseDir string) ([]*agents.Agent, error) {
+	detected := agents.Detect(baseDir)
+	if len(detected) != 0 {
+		return detected, nil
+	}
+	return promptSelectAgents()
+}
+
+// promptSelectAgents asks the user to pick which agents to install hooks + MCP
+// config for. Empty selection means "skip". Returns empty in non-interactive
+// environments (CI, tests) and on user cancel.
+func promptSelectAgents() ([]*agents.Agent, error) {
+	if !isInteractive() {
+		return nil, nil
+	}
+
+	all := agents.All()
+	options := make([]huh.Option[agents.AgentID], 0, len(all))
+	for _, a := range all {
+		options = append(options, huh.NewOption(a.DisplayName, a.ID))
+	}
+
+	var picked []agents.AgentID
+	err := huh.NewMultiSelect[agents.AgentID]().
+		Title("No AI agent auto-detected. Select agents to configure (space to toggle, enter to confirm)").
+		Options(options...).
+		Value(&picked).
+		Run()
+	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]*agents.Agent, 0, len(picked))
+	for _, id := range picked {
+		if a := agents.ByID(id); a != nil {
+			result = append(result, a)
+		}
+	}
+	return result, nil
+}
+
+// defaultIsInteractive reports whether prompts can be shown. Used to skip
+// prompts in CI / tests where /dev/tty is unavailable. We probe /dev/tty
+// directly because huh opens it explicitly — stdin being a char device isn't
+// sufficient.
+func defaultIsInteractive() bool {
+	f, err := os.OpenFile("/dev/tty", os.O_RDONLY, 0)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
 }

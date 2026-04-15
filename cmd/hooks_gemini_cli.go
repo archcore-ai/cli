@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"archcore-cli/internal/agents"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
 
@@ -98,11 +97,6 @@ func runGeminiCLIHooksInstall(baseDir string) error {
 
 	if err := os.WriteFile(settingsPath, out, 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", settingsPath, err)
-	}
-
-	// Also install MCP config for Gemini CLI.
-	if err := installMCPForAgent(baseDir, agents.ByID(agents.GeminiCLI)); err != nil {
-		fmt.Println(display.WarnLine(fmt.Sprintf("Gemini CLI MCP install: %v", err)))
 	}
 
 	return nil

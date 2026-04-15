@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"archcore-cli/internal/agents"
 )
 
 func TestCopilotWriteHooksConfig_NewFile(t *testing.T) {
@@ -152,12 +154,12 @@ func TestCopilotWriteHooksConfig_CorruptedJSON(t *testing.T) {
 	}
 }
 
-func TestCopilotWriteHooksConfig_AlsoInstallsMCP(t *testing.T) {
+func TestRunHooksInstallForAgent_CopilotAlsoInstallsMCP(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runCopilotHooksInstall(base); err != nil {
-		t.Fatalf("runCopilotHooksInstall: %v", err)
+	if err := runHooksInstallForAgent(base, agents.Copilot); err != nil {
+		t.Fatalf("runHooksInstallForAgent: %v", err)
 	}
 
 	// .vscode/mcp.json should exist with "servers" key.

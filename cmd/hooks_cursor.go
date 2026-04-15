@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"archcore-cli/internal/agents"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
 
@@ -98,11 +97,6 @@ func runCursorHooksInstall(baseDir string) error {
 
 	if err := os.WriteFile(hooksPath, out, 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", hooksPath, err)
-	}
-
-	// Also install MCP config for Cursor.
-	if err := installMCPForAgent(baseDir, agents.ByID(agents.Cursor)); err != nil {
-		fmt.Println(display.WarnLine(fmt.Sprintf("Cursor MCP install: %v", err)))
 	}
 
 	return nil

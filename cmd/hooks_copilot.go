@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"archcore-cli/internal/agents"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
 
@@ -17,7 +16,7 @@ import (
 
 // copilotHooksConfig represents the .github/hooks/<name>.json structure.
 type copilotHooksConfig struct {
-	Version int                            `json:"version"`
+	Version int                           `json:"version"`
 	Hooks   map[string][]copilotHookEntry `json:"hooks"`
 }
 
@@ -98,11 +97,6 @@ func runCopilotHooksInstall(baseDir string) error {
 
 	if err := os.WriteFile(hooksPath, out, 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", hooksPath, err)
-	}
-
-	// Also install MCP config for Copilot.
-	if err := installMCPForAgent(baseDir, agents.ByID(agents.Copilot)); err != nil {
-		fmt.Println(display.WarnLine(fmt.Sprintf("Copilot MCP install: %v", err)))
 	}
 
 	return nil

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"archcore-cli/internal/agents"
 )
 
 func setupArchcoreDir(t *testing.T) string {
@@ -249,12 +251,12 @@ func TestRunHooksInstall_PreservesKeyOrder(t *testing.T) {
 	}
 }
 
-func TestRunHooksInstall_AlsoInstallsMCP(t *testing.T) {
+func TestRunHooksInstallForAgent_AlsoInstallsMCP(t *testing.T) {
 	t.Parallel()
 	base := setupArchcoreDir(t)
 
-	if err := runHooksInstall(base); err != nil {
-		t.Fatalf("runHooksInstall: %v", err)
+	if err := runHooksInstallForAgent(base, agents.ClaudeCode); err != nil {
+		t.Fatalf("runHooksInstallForAgent: %v", err)
 	}
 
 	// .mcp.json should exist.

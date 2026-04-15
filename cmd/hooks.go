@@ -108,27 +108,33 @@ func runHooksInstallForAgent(baseDir string, id agents.AgentID) error {
 	}
 	if !installed {
 		fmt.Println(display.WarnLine(fmt.Sprintf("%s does not support hooks", agent.DisplayName)))
+		return nil
+	}
+	if err := installMCPForAgent(baseDir, agent); err != nil {
+		return err
 	}
 	return nil
 }
 
-// runHooksInstallAutoDetect detects agents and installs hooks for all that support them.
-// Falls back to Claude Code if no agents detected.
+// runHooksInstallAutoDetect detects agents and installs hooks + MCP config
+// for all that support them. If none detected, prompts the user.
 func runHooksInstallAutoDetect(baseDir string) error {
-	detected := agents.Detect(baseDir)
+	detected, err := resolveAgents(baseDir)
+	if err != nil {
+		return err
+	}
 	if len(detected) == 0 {
-		detected = []*agents.Agent{agents.ByID(agents.ClaudeCode)}
+		fmt.Println(display.Dim.Render("  No AI agent selected."))
+		return nil
 	}
 
 	for _, agent := range detected {
 		if _, err := installHooksForAgent(baseDir, agent); err != nil {
 			fmt.Println(display.WarnLine(fmt.Sprintf("%s hooks: %v", agent.DisplayName, err)))
 		}
-	}
-
-	// Also install MCP for all detected agents.
-	if err := runMCPInstallAutoDetect(baseDir); err != nil {
-		fmt.Println(display.WarnLine(fmt.Sprintf("MCP auto-detect install: %v", err)))
+		if err := installMCPForAgent(baseDir, agent); err != nil {
+			fmt.Println(display.WarnLine(fmt.Sprintf("%s MCP: %v", agent.DisplayName, err)))
+		}
 	}
 
 	return nil
@@ -194,11 +200,6 @@ func runHooksInstall(baseDir string) error {
 
 	if err := os.WriteFile(settingsPath, out, 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", settingsPath, err)
-	}
-
-	// Also install MCP config (soft error — warn but don't fail).
-	if err := runMCPInstall(baseDir); err != nil {
-		fmt.Println(display.WarnLine(fmt.Sprintf("MCP install: %v", err)))
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -152,8 +153,11 @@ func TestRunInit_ServerUnreachable(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for unreachable server")
 	}
-	if result == nil {
-		t.Fatal("expected non-nil result even on server error")
+	if result != nil {
+		t.Fatal("expected nil result on server error")
+	}
+	if !errors.Is(err, ErrServerUnreachable) {
+		t.Fatalf("expected ErrServerUnreachable, got: %v", err)
 	}
 	// Dirs should still be created even though server is unreachable.
 	if !config.DirExists(base) {
@@ -168,8 +172,8 @@ func TestRunInit_InstallsHooksAndMCP(t *testing.T) {
 	if _, err := runInit(context.Background(), base, settings); err != nil {
 		t.Fatalf("runInit: %v", err)
 	}
-	if err := runHooksInstall(base); err != nil {
-		t.Fatalf("runHooksInstall: %v", err)
+	if err := runHooksInstallForAgent(base, agents.ClaudeCode); err != nil {
+		t.Fatalf("runHooksInstallForAgent: %v", err)
 	}
 
 	// Verify .claude/settings.json has all 3 hook events.
@@ -224,8 +228,8 @@ func TestRunInit_HooksIdempotent(t *testing.T) {
 
 	// Run hooks install twice.
 	for i := 0; i < 2; i++ {
-		if err := runHooksInstall(base); err != nil {
-			t.Fatalf("runHooksInstall call %d: %v", i+1, err)
+		if err := runHooksInstallForAgent(base, agents.ClaudeCode); err != nil {
+			t.Fatalf("runHooksInstallForAgent call %d: %v", i+1, err)
 		}
 	}
 
@@ -288,8 +292,12 @@ func TestInit_DetectsMultipleAgents(t *testing.T) {
 	base := t.TempDir()
 
 	// Create agent marker directories before init.
-	os.MkdirAll(filepath.Join(base, ".cursor"), 0o755)
-	os.MkdirAll(filepath.Join(base, ".gemini"), 0o755)
+	if err := os.MkdirAll(filepath.Join(base, ".cursor"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .cursor: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(base, ".gemini"), 0o755); err != nil {
+		t.Fatalf("MkdirAll .gemini: %v", err)
+	}
 
 	settings := config.NewNoneSettings()
 	if _, err := runInit(context.Background(), base, settings); err != nil {
@@ -323,28 +331,22 @@ func TestInit_DetectsMultipleAgents(t *testing.T) {
 	}
 }
 
-func TestInit_NoAgents_FallbackClaudeCode(t *testing.T) {
-	t.Parallel()
+func TestResolveAgents_NoAgents_NonInteractive(t *testing.T) {
 	base := t.TempDir()
+	origIsInteractive := isInteractive
+	isInteractive = func() bool { return false }
+	defer func() { isInteractive = origIsInteractive }()
 
 	settings := config.NewNoneSettings()
 	if _, err := runInit(context.Background(), base, settings); err != nil {
 		t.Fatalf("runInit: %v", err)
 	}
 
-	// No agent directories exist, so auto-detect should use Claude Code as fallback.
-	detected := agents.Detect(base)
-	if len(detected) != 0 {
-		t.Errorf("expected 0 detected agents (init creates .archcore/, not agent dirs), got %d", len(detected))
+	resolved, err := resolveAgents(base)
+	if err != nil {
+		t.Fatalf("resolveAgents: %v", err)
 	}
-
-	// Simulate the fallback behavior.
-	if err := runHooksInstall(base); err != nil {
-		t.Fatalf("runHooksInstall: %v", err)
-	}
-
-	// .mcp.json should exist (Claude Code).
-	if _, err := os.Stat(filepath.Join(base, ".mcp.json")); err != nil {
-		t.Error("expected .mcp.json (Claude Code fallback)")
+	if len(resolved) != 0 {
+		t.Fatalf("expected no resolved agents, got %d", len(resolved))
 	}
 }
