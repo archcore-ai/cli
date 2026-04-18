@@ -7,24 +7,29 @@
 
 **Git-native context for AI coding agents**
 
-Archcore helps teams turn scattered repo knowledge into structured context that AI coding agents can find, reuse, and follow.
+> Git ships your code. CI/CD ships your delivery. Archcore ships your understanding.
 
-> Context engineering for repositories.
+Archcore is a context layer for your repository. Architecture decisions, rules, plans, and incidents live as structured documents that every AI coding agent — Claude Code, Cursor, Copilot, Gemini CLI, Codex — can read, reuse, and follow.
 
-AI coding agents start every session without project context. Your architecture decisions, coding conventions, postmortems, and implementation plans are scattered across docs, chats, and tool-specific files. Archcore gives your repo a structured context layer that agents can read and update.
+## Quick Start
 
-## Why Archcore
+```bash
+# Install
+curl -fsSL https://archcore.ai/install.sh | bash
 
-- **Shared repo context** — keep architecture knowledge where code lives
-- **Works across agents** — Claude Code, Cursor, Gemini CLI, GitHub Copilot, Codex CLI, OpenCode, Roo Code, and Cline
-- **Structured documents** — ADRs, RFCs, Rules, Guides, Plans, PRDs, incidents, and more
-- **Git-native** — local-first, version-controlled, reviewable with code
-- **MCP-powered** — agents can read, create, update, and link documents in real time
-- **Built for teams** — context survives sessions, teammates, and tool changes
+# Initialize in your project
+cd your-project
+archcore init
+
+# Verify setup
+archcore status
+```
+
+Now open your AI agent and say: _"Record an ADR: we're using PostgreSQL for primary storage."_ The agent will create a structured decision document in `.archcore/` that every future session can read.
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
+- [Why Archcore](#why-archcore)
 - [Installation](#installation)
 - [How It Works](#how-it-works)
 - [What Lives in `.archcore/`](#what-lives-in-archcore)
@@ -38,21 +43,25 @@ AI coding agents start every session without project context. Your architecture 
 - [Development](#development)
 - [Links & License](#links--license)
 
-## Quick Start
+## Why Archcore
 
-```bash
-# Install
-curl -fsSL https://archcore.ai/install.sh | bash
+AI coding agents don't understand your system. They:
 
-# Initialize in your project
-cd your-project
-archcore init
+- ignore your architecture
+- break your conventions
+- duplicate logic that already exists
+- make inconsistent decisions across sessions
 
-# Validate setup
-archcore doctor
-```
+The real context lives in your head, in scattered docs, and in implicit patterns that never reach the model. Archcore makes that context explicit, structured, and versioned alongside your code:
 
-After `archcore init`, Archcore creates a `.archcore/` directory in your repo and installs integrations so your coding assistant can read and manage project context.
+- **Shared repo context** — architecture, rules, plans, and postmortems next to the code they describe
+- **Works across agents** — Claude Code, Cursor, Gemini CLI, GitHub Copilot, Codex CLI, OpenCode, Roo Code, and Cline
+- **Structured document types** — ADRs, RFCs, rules, guides, plans, PRDs, incidents, and more
+- **Git-native** — local-first, version-controlled, reviewable with code
+- **MCP-powered** — agents read, create, update, and link documents in real time
+- **Built for teams** — context survives sessions, teammates, and tool changes
+
+> **AI should follow your system, not guess it.**
 
 ## Installation
 
@@ -109,6 +118,14 @@ go build -o archcore .
 4. **Keep it in Git**  
    Review context changes like code, evolve them over time, and keep them portable across tools.
 
+### Mental model
+
+Archcore CLI is a **context compiler** for your repository. It turns scattered documents into structured, machine-readable context. MCP and hooks are the **runtime** — the surface agents use to consume that context during real work.
+
+```text
+implicit repo knowledge  →  structured context  →  AI-readable system
+```
+
 ## What Lives in `.archcore/`
 
 ```text
@@ -141,16 +158,16 @@ See the Archcore CLI repository itself for a working example: [`.archcore/` in t
 
 ## Why Not Just Instruction Files?
 
-Files like `CLAUDE.md`, `AGENTS.md`, or repository instructions are useful, but they break down when your team needs:
+`CLAUDE.md`, `AGENTS.md`, and repository instructions are useful starting points, but they break down when your team needs:
 
 - more than one flat memory file
-- structured document types like ADRs, rules, plans, and incidents
+- structured document types — ADRs, rules, plans, incidents
 - reusable context across multiple AI tools
 - versioned project knowledge that grows with the codebase
-- relations between documents, like a plan implementing a PRD
-- incident learnings and recurring workflows that agents can reuse later
+- relations between documents (a plan that _implements_ a PRD, an RFC that _extends_ an ADR)
+- incident learnings and recurring workflows that agents can pick up later
 
-Archcore complements instruction files by giving your repo a structured context layer that agents can find, reuse, and follow.
+Instruction files tell the agent _what you want_. Archcore tells the agent _how your system works_ — so the agent can follow your system instead of guessing it.
 
 ## Try It
 
@@ -182,49 +199,50 @@ Archcore organizes context into 3 layers of knowledge: Vision, Knowledge, and Ex
 
 ### Vision
 
-| Type | Full Name | Description |
-|------|-----------|-------------|
-| `prd` | Product Requirements Document | Goals, user stories, acceptance criteria, and success metrics |
-| `idea` | Idea | Lightweight capture of a product or technical idea for future exploration |
-| `plan` | Plan | Phased task list with acceptance criteria and dependencies |
+| Type   | Full Name                     | Description                                                               |
+| ------ | ----------------------------- | ------------------------------------------------------------------------- |
+| `prd`  | Product Requirements Document | Goals, user stories, acceptance criteria, and success metrics             |
+| `idea` | Idea                          | Lightweight capture of a product or technical idea for future exploration |
+| `plan` | Plan                          | Phased task list with acceptance criteria and dependencies                |
 
 Archcore also supports two additional requirements tracks for teams that need structured discovery or formal decomposition:
 
-**Sources track** (MRD → BRD → URD) — captures *where* requirements come from:
+**Sources track** (MRD → BRD → URD) — captures _where_ requirements come from:
 
-| Type | Full Name | Description |
-|------|-----------|-------------|
-| `mrd` | Market Requirements Document | Market landscape, TAM/SAM/SOM, competitive analysis, and market needs |
-| `brd` | Business Requirements Document | Business objectives, stakeholders, ROI, and business rules |
-| `urd` | User Requirements Document | User personas, journeys, usability requirements, and acceptance criteria |
+| Type  | Full Name                      | Description                                                              |
+| ----- | ------------------------------ | ------------------------------------------------------------------------ |
+| `mrd` | Market Requirements Document   | Market landscape, TAM/SAM/SOM, competitive analysis, and market needs    |
+| `brd` | Business Requirements Document | Business objectives, stakeholders, ROI, and business rules               |
+| `urd` | User Requirements Document     | User personas, journeys, usability requirements, and acceptance criteria |
 
-**ISO/IEC/IEEE 29148:2018 track** (BRS → StRS → SyRS → SRS) — captures *how* requirements decompose:
+**ISO/IEC/IEEE 29148:2018 track** (BRS → StRS → SyRS → SRS) — captures _how_ requirements decompose:
 
-| Type | Full Name | Description |
-|------|-----------|-------------|
-| `brs` | Business Requirements Specification | Mission, goals, objectives, and business operational concept |
-| `strs` | Stakeholder Requirements Specification | Stakeholder needs, operational concept, and user requirements |
-| `syrs` | System Requirements Specification | System functions, interfaces, performance, and design constraints |
-| `srs` | Software Requirements Specification | Software functions, external interfaces, and detailed behavioral specs |
+| Type   | Full Name                              | Description                                                            |
+| ------ | -------------------------------------- | ---------------------------------------------------------------------- |
+| `brs`  | Business Requirements Specification    | Mission, goals, objectives, and business operational concept           |
+| `strs` | Stakeholder Requirements Specification | Stakeholder needs, operational concept, and user requirements          |
+| `syrs` | System Requirements Specification      | System functions, interfaces, performance, and design constraints      |
+| `srs`  | Software Requirements Specification    | Software functions, external interfaces, and detailed behavioral specs |
 
 Use PRD for most projects. Add the sources track when you need structured requirement discovery. Add ISO 29148 when you need formal traceability for regulated or complex multi-team systems. Mix freely — some features can use a PRD while others use the full cascade.
+
 ### Knowledge
 
-| Type | Full Name | Description |
-|------|-----------|-------------|
-| `adr` | Architecture Decision Record | Captures a finalized technical decision with context, alternatives, and consequences |
-| `rfc` | Request for Comments | Proposes a significant change open for team review and feedback |
-| `rule` | Rule | Coding or process standard with imperative guidance and examples |
-| `guide` | Guide | Step-by-step instructions for completing a specific task |
-| `doc` | Document | Reference documentation, registries, and descriptive material |
-| `spec` | Specification | Canonical normative contract for a system, component, interface, or protocol |
+| Type    | Full Name                    | Description                                                                          |
+| ------- | ---------------------------- | ------------------------------------------------------------------------------------ |
+| `adr`   | Architecture Decision Record | Captures a finalized technical decision with context, alternatives, and consequences |
+| `rfc`   | Request for Comments         | Proposes a significant change open for team review and feedback                      |
+| `rule`  | Rule                         | Coding or process standard with imperative guidance and examples                     |
+| `guide` | Guide                        | Step-by-step instructions for completing a specific task                             |
+| `doc`   | Document                     | Reference documentation, registries, and descriptive material                        |
+| `spec`  | Specification                | Canonical normative contract for a system, component, interface, or protocol         |
 
 ### Experience
 
-| Type | Full Name | Description |
-|------|-----------|-------------|
-| `task-type` | Task Type | Reusable checklist and workflow for a recurring task |
-| `cpat` | Code Change Pattern | Root-cause analysis of a bug or incident with prevention steps |
+| Type        | Full Name           | Description                                                    |
+| ----------- | ------------------- | -------------------------------------------------------------- |
+| `task-type` | Task Type           | Reusable checklist and workflow for a recurring task           |
+| `cpat`      | Code Change Pattern | Root-cause analysis of a bug or incident with prevention steps |
 
 Each document is a Markdown file with YAML frontmatter:
 
@@ -235,6 +253,7 @@ status: draft
 ---
 
 ## Context
+
 ...
 ```
 
@@ -253,16 +272,16 @@ Relations are stored in `.sync-state.json` and managed automatically by the AI a
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `archcore init` | Initialize `.archcore/` directory interactively |
-| `archcore doctor` | Check your archcore setup and fix issues |
-| `archcore status` | Check .archcore/ structure and document health |
-| `archcore config` | View or modify settings |
-| `archcore hooks install` | Install hooks for detected AI agents |
-| `archcore update` | Update Archcore to the latest version |
-| `archcore mcp` | Run the MCP stdio server |
-| `archcore mcp install` | Install MCP config for detected agents |
+| Command                  | Description                                     |
+| ------------------------ | ----------------------------------------------- |
+| `archcore init`          | Initialize `.archcore/` directory interactively |
+| `archcore doctor`        | Check your archcore setup and fix issues        |
+| `archcore status`        | Check .archcore/ structure and document health  |
+| `archcore config`        | View or modify settings                         |
+| `archcore hooks install` | Install hooks for detected AI agents            |
+| `archcore update`        | Update Archcore to the latest version           |
+| `archcore mcp`           | Run the MCP stdio server                        |
+| `archcore mcp install`   | Install MCP config for detected agents          |
 
 ### Update
 
@@ -290,16 +309,16 @@ Archcore integrates with AI coding agents in two ways:
 
 ### Supported Agents
 
-| Agent | Hooks | MCP |
-|-------|-------|-----|
-| Claude Code | yes | yes |
-| Cursor | yes | yes |
-| Gemini CLI | yes | yes |
-| GitHub Copilot | yes | yes |
-| OpenCode | — | yes |
-| Codex CLI | — | yes |
-| Roo Code | — | yes |
-| Cline | — | manual |
+| Agent          | Hooks | MCP    |
+| -------------- | ----- | ------ |
+| Claude Code    | yes   | yes    |
+| Cursor         | yes   | yes    |
+| Gemini CLI     | yes   | yes    |
+| GitHub Copilot | yes   | yes    |
+| OpenCode       | —     | yes    |
+| Codex CLI      | —     | yes    |
+| Roo Code       | —     | yes    |
+| Cline          | —     | manual |
 
 ### Install Integrations
 
@@ -315,10 +334,10 @@ archcore mcp install --agent opencode
 
 Settings are stored in `.archcore/settings.json` and created during `archcore init`.
 
-| Field | Description | Values |
-|-------|-------------|--------|
-| `sync` | Sync mode. Cloud and on-prem are coming soon. | `none` (local only), `cloud`, `on-prem` |
-| `language` | Document language. Helps the agent generate documentation in the right language. | String, defaults to `en` |
+| Field      | Description                                                                      | Values                                  |
+| ---------- | -------------------------------------------------------------------------------- | --------------------------------------- |
+| `sync`     | Sync mode. Cloud and on-prem are coming soon.                                    | `none` (local only), `cloud`, `on-prem` |
+| `language` | Document language. Helps the agent generate documentation in the right language. | String, defaults to `en`                |
 
 ```bash
 archcore config                              # show all settings
