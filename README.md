@@ -14,7 +14,7 @@ Archcore is a context layer for your repository. Architecture decisions, rules, 
 ## Quick Start
 
 ```bash
-# Install
+# Install (macOS / Linux)
 curl -fsSL https://archcore.ai/install.sh | bash
 
 # Initialize in your project
@@ -24,6 +24,8 @@ archcore init
 # Verify setup
 archcore status
 ```
+
+> On **Windows**? Use PowerShell: `irm https://archcore.ai/install.ps1 | iex`. For WSL, `go install`, and other options, see the [full install guide](https://docs.archcore.ai/cli/install/).
 
 Now open your AI agent and say: _"Record an ADR: we're using PostgreSQL for primary storage."_ The agent will create a structured decision document in `.archcore/` that every future session can read.
 
@@ -102,6 +104,8 @@ go build -o archcore .
 ```
 
 **Supported platforms:** macOS, Linux, Windows — amd64 and arm64.
+
+For all install methods, environment variables (`ARCHCORE_VERSION`, `ARCHCORE_INSTALL_DIR`, `GITHUB_TOKEN`), and PATH troubleshooting, see the [full install guide on docs.archcore.ai](https://docs.archcore.ai/cli/install/).
 
 ## How It Works
 
