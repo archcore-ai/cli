@@ -1,5 +1,5 @@
 ---
-title: Supported AI Agents Registry
+title: "Supported AI Agents Registry"
 status: accepted
 ---
 
@@ -26,7 +26,7 @@ Archcore integrates with 8 AI coding agents. Each agent has a unique combination
 
 Agents: **Claude Code**, **Cursor**, **Gemini CLI**, **GitHub Copilot**
 
-These agents support both lifecycle hooks (session start, stop, prompt submit) and MCP tool access. Archcore can automatically detect them, install hooks, and configure MCP.
+These agents support the session-start lifecycle hook and MCP tool access. Archcore auto-detects them, installs the hook, and writes MCP config during `archcore init`.
 
 ### MCP Only
 
@@ -42,29 +42,30 @@ Cline stores MCP config in VS Code `globalStorage`, not in a project-level file.
 
 ## Per-Agent Details
 
+Only the `SessionStart` lifecycle event is active. `Stop` and `UserPromptSubmit`/`beforeSubmitPrompt`/`BeforeAgent` were removed — see [Disable Stop and Prompt Hooks ADR](disable-stop-and-prompt-hooks.adr.md).
+
 ### Claude Code
 
 - **Config paths:** `.claude/settings.json` (hooks), `.mcp.json` (MCP)
-- **Hook events:** `SessionStart`, `Stop`, `UserPromptSubmit`
-- **Hook commands:** `archcore hooks claude-code session-start|stop|user-prompt-submit`
+- **Hook events:** `SessionStart`
+- **Hook commands:** `archcore hooks claude-code session-start`
 - **MCP format:** Standard `mcpServers` JSON (`{"command": "archcore", "args": ["mcp"]}`)
 - **Source:** `internal/agents/claude_code.go`, `cmd/hooks_claude_code.go`
 
 ### Cursor
 
 - **Config paths:** `.cursor/hooks.json` (hooks), `.cursor/mcp.json` (MCP)
-- **Hook events:** `sessionStart`, `stop`, `beforeSubmitPrompt`
-- **Hook commands:** `archcore hooks cursor session-start|stop|before-submit-prompt`
+- **Hook events:** `sessionStart`
+- **Hook commands:** `archcore hooks cursor session-start`
 - **MCP format:** Standard `mcpServers` JSON
 - **Source:** `internal/agents/cursor.go`, `cmd/hooks_cursor.go`
 
 ### Gemini CLI
 
 - **Config paths:** `.gemini/settings.json` (hooks and MCP, shared file)
-- **Hook events:** `SessionStart`, `BeforeAgent`
-- **Hook commands:** `archcore hooks gemini-cli session-start|before-agent`
+- **Hook events:** `SessionStart`
+- **Hook commands:** `archcore hooks gemini-cli session-start`
 - **MCP format:** Standard `mcpServers` JSON (inside same `settings.json`)
-- **Note:** No `Stop` event — Gemini CLI uses `BeforeAgent` instead of `UserPromptSubmit`
 - **Source:** `internal/agents/gemini_cli.go`, `cmd/hooks_gemini_cli.go`
 
 ### GitHub Copilot

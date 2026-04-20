@@ -7,13 +7,13 @@ status: accepted
 
 Archcore hooks intercept AI agent lifecycle events to inject documentation context at session start. The only active hook event is **SessionStart**, which provides agents with a list of existing documents and available MCP tools.
 
-See also: [Supported AI Agents Registry](supported-ai-agents.rule.md) for agent-specific details, [Backup Invalid Configs](backup-invalid-configs.adr.md) for config file recovery behavior, [Disable Stop and Prompt Hooks ADR](disable-stop-and-prompt-hooks.adr.md) for why Stop/UserPromptSubmit hooks were removed.
+See also: [Supported AI Agents Registry](supported-ai-agents.doc.md) for agent-specific details, [Backup Invalid Configs](backup-invalid-configs.adr.md) for config file recovery behavior, [Disable Stop and Prompt Hooks ADR](disable-stop-and-prompt-hooks.adr.md) for why Stop/UserPromptSubmit hooks were removed.
 
 ## Commands
 
 ### `archcore hooks install`
 
-Installs hooks for all detected agents (falls back to Claude Code if none detected). Also triggers `archcore mcp install` for MCP config.
+Installs hooks for all detected agents. Also triggers `archcore mcp install` for MCP config.
 
 ```
 archcore hooks install              # auto-detect agents
@@ -28,6 +28,7 @@ Handles the SessionStart hook event for an agent. These commands are invoked by 
 archcore hooks claude-code session-start
 archcore hooks cursor session-start
 archcore hooks gemini-cli session-start
+archcore hooks copilot session-start
 ```
 
 ## Hook Input (stdin JSON)
@@ -64,18 +65,20 @@ Built by `buildSessionContext()` in `cmd/hooks_common.go`. Injected at session s
 
 1. **Header** — Identifies archcore and available MCP tools (list_documents, get_document, create_document, update_document, add_relation, remove_relation, list_relations)
 2. **Existing documents** — Grouped by category (`knowledge`, `vision`, `experience`) with filenames and titles
-3. **Document relations** — Summary count and available relation management tools
-4. **MCP referral** — Points to MCP server instructions for document types and workflow rules
+3. **Tags** — Top tag frequencies (up to 30) when tags are present in any document
+4. **Document relations** — Summary count and available relation management tools
+5. **MCP referral** — Points to MCP server instructions for document types and workflow rules
 
 ## Per-Agent Event Mapping
 
 Each agent maps to a single hook event:
 
-| Agent       | Hook Event   | Config File             | Command                                    |
-| ----------- | ------------ | ----------------------- | ------------------------------------------ |
-| Claude Code | SessionStart | `.claude/settings.json` | `archcore hooks claude-code session-start` |
-| Cursor      | sessionStart | `.cursor/hooks.json`    | `archcore hooks cursor session-start`      |
-| Gemini CLI  | SessionStart | `.gemini/settings.json` | `archcore hooks gemini-cli session-start`  |
+| Agent          | Hook Event   | Config File                   | Command                                    |
+| -------------- | ------------ | ----------------------------- | ------------------------------------------ |
+| Claude Code    | SessionStart | `.claude/settings.json`       | `archcore hooks claude-code session-start` |
+| Cursor         | sessionStart | `.cursor/hooks.json`          | `archcore hooks cursor session-start`      |
+| Gemini CLI     | SessionStart | `.gemini/settings.json`       | `archcore hooks gemini-cli session-start`  |
+| GitHub Copilot | sessionStart | `.github/hooks/archcore.json` | `archcore hooks copilot session-start`     |
 
 ## Removed Hooks (Historical)
 

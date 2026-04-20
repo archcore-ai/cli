@@ -5,9 +5,9 @@ status: accepted
 
 ## Overview
 
-Guide for building, testing, and extending the Archcore CLI — a Go tool that manages a local `.archcore/` directory of structured documents and integrates with AI coding agents (Claude Code, Cursor, Gemini CLI, and others) via MCP and hooks.
+Guide for building, testing, and extending the Archcore CLI — a Go tool that manages a local `.archcore/` directory of structured documents and integrates with AI coding agents (Claude Code, Cursor, Gemini CLI, GitHub Copilot, and others) via MCP and hooks.
 
-See also: [Supported AI Agents Registry](supported-ai-agents.rule.md), [CLI Hooks Reference](cli-hooks-reference.doc.md), [Agent Integration Guide](agent-hooks-integration.guide.md).
+See also: [Supported AI Agents Registry](../integrations/supported-ai-agents.doc.md), [CLI Hooks Reference](../integrations/cli-hooks-reference.doc.md), [Agent Integration Guide](../integrations/agent-hooks-integration.guide.md).
 
 ## Prerequisites
 
@@ -25,13 +25,13 @@ go test ./cmd/ -run TestX  # Run a specific test
 ## Getting Started
 
 ```bash
-./archcore init       # Interactive setup wizard (sync type, directories, settings)
+./archcore init       # Interactive setup wizard (directories, agent detection)
 ./archcore doctor     # Health check: structure + settings + server connectivity
 ./archcore status     # Structural checks only (naming, frontmatter, categories)
 ./archcore update     # Self-update to the latest release
 ```
 
-`init` creates `.archcore/` with three subdirectories (`vision/`, `knowledge/`, `experience/`), each holding documents of specific types. Settings go in `.archcore/settings.json`. It also auto-detects AI agents and installs hooks + MCP config for all found agents.
+`init` creates `.archcore/` with a free-form directory structure — documents are organized by domain/feature/team, and category is derived from the filename suffix (`slug.type.md`). Settings go in `.archcore/settings.json`. It also auto-detects AI agents and installs hooks + MCP config for all found agents.
 
 ## Settings and Configuration
 
@@ -53,7 +53,7 @@ Settings live in `.archcore/settings.json`. Use the `config` command to read and
 
 The `language` field controls the language the MCP server uses when generating document content (section headers, placeholders, descriptions). It is sync-independent — available in all modes. When not set, defaults to `"en"`. Uses `omitempty` so it only appears in settings.json when explicitly configured.
 
-See [Sync Mode Field Validation](../sync/sync-mode-field-validation.rule.md) for per-sync-mode field rules, and [Optional Settings Omit Defaults](optional-settings-omit-defaults.rule.md) for the convention on optional fields.
+See [Sync Mode Field Validation](../sync/sync-mode-field-validation.rule.md) for per-sync-mode field rules, and [Optional Settings Omit Defaults](../cli/optional-settings-omit-defaults.rule.md) for the convention on optional fields.
 
 ## How to Add a New Setting
 
@@ -66,7 +66,7 @@ See [Sync Mode Field Validation](../sync/sync-mode-field-validation.rule.md) for
 7. Add `"fieldname"` cases to `getSettingsValue()` and `setSettingsValue()` in `cmd/config.go`
 8. Add tests in both `internal/config/config_test.go` and `cmd/config_cmd_test.go`
 
-See [Optional Settings Omit Defaults](optional-settings-omit-defaults.rule.md) for conventions on optional fields.
+See [Optional Settings Omit Defaults](../cli/optional-settings-omit-defaults.rule.md) for conventions on optional fields.
 
 ## How to Add a New Command
 
@@ -79,73 +79,64 @@ See [Optional Settings Omit Defaults](optional-settings-omit-defaults.rule.md) f
 ## How to Add a New Document Type
 
 1. Add a `TypeXxx` constant in `templates/templates.go`
-2. Add it to `categoryMap` with the correct category
-3. Add it to `ValidTypes()` return slice
+2. Add it to `categoryMap` with the correct virtual category
+3. Ensure it is returned by `ValidTypes()` (derived from `categoryMap`)
 4. Create a `generateXxxTemplate()` function
 5. Add the case to `GenerateTemplate()` switch
-6. Update `typeDescriptions` in `cmd/hooks_common.go` for hook context
+6. Update the MCP server instructions in `internal/mcp/server.go` (`mcpServerInstructions` — document types list and the "WHEN TO CREATE" block)
 
-Document types map to categories:
+Document types map to virtual categories:
 
 | Category | Types |
 |----------|-------|
-| `knowledge/` | adr, rfc, rule, guide, doc |
-| `vision/` | prd, idea, plan |
-| `experience/` | task-type, cpat |
+| `knowledge` | adr, rfc, rule, guide, doc, spec |
+| `vision` | prd, idea, plan, mrd, brd, urd, brs, strs, syrs, srs |
+| `experience` | task-type, cpat |
 
-Files follow the naming convention: `<slug>.<type>.md` (e.g., `use-postgres.adr.md`).
+Files follow the naming convention: `<slug>.<type>.md` (e.g., `use-postgres.adr.md`). The directory structure under `.archcore/` is free-form — see [Free-Form Directory Structure ADR](../dir/free-form-directory-structure.adr.md).
 
 ## How to Add a New MCP Tool
 
-The MCP server (`archcore mcp`) exposes tools for AI agents to manage documents. Currently: `list_documents`, `get_document`, `create_document`, `update_document`.
+The MCP server (`archcore mcp`) exposes eight tools for AI agents to manage documents: `list_documents`, `get_document`, `create_document`, `update_document`, `remove_document`, `add_relation`, `remove_relation`, `list_relations`.
 
 1. Create `internal/mcp/tools/<name>.go` returning `(mcp.Tool, server.ToolHandlerFunc)`
 2. Create `internal/mcp/tools/<name>_test.go`
 3. Register in `internal/mcp/server.go` via `s.AddTool()`
 4. Use helpers from `common.go` (`ScanDocuments`, `ReadDocumentContent`, `ExtractDocType`, `splitDocument`)
-5. Validate inputs and check path safety (no `..`, must start with `.archcore/`)
+5. Validate inputs and check path safety (no `..`, must resolve inside `.archcore/`)
+6. Never expose absolute filesystem paths in error messages — see [No Absolute Paths in MCP Errors](../mcp/no-absolute-paths-in-mcp-errors.rule.md)
 
 ## How to Modify Hooks
 
-Hooks intercept agent lifecycle events to inject documentation context and detect documentation opportunities. The implementation is split across multiple files with shared handler logic.
+Hooks intercept agent lifecycle events to inject documentation context at session start. Only the `SessionStart` event is active — `Stop` and `UserPromptSubmit`-family events were removed; see [Disable Stop and Prompt Hooks ADR](../integrations/disable-stop-and-prompt-hooks.adr.md).
 
 ### File Structure
 
 | File | Purpose |
 |------|---------|
-| `cmd/hooks.go` | Install command, Claude Code hooks config writer, `installHooksForAgent()` router |
-| `cmd/hooks_claude_code.go` | Claude Code subcommand, `hookInput`/`hookOutput` structs, shared handler factories |
-| `cmd/hooks_cursor.go` | Cursor subcommand, hooks config writer (`cursorHooksConfig` struct) |
+| `cmd/hooks.go` | `hooks install` command, Claude Code hooks config writer, `installHooksForAgent()` router |
+| `cmd/hooks_claude_code.go` | Claude Code subcommand, `hookInput`/`hookOutput` structs, `newSessionStartHookCmd` factory, `handleSessionStart` |
+| `cmd/hooks_cursor.go` | Cursor subcommand, `cursorHooksConfig` writer |
 | `cmd/hooks_gemini_cli.go` | Gemini CLI subcommand, hooks config writer |
-| `cmd/hooks_common.go` | `buildSessionContext()`, keywords, type descriptions, instruction templates |
+| `cmd/hooks_copilot.go` | GitHub Copilot subcommand, `copilotHooksConfig` writer (`.github/hooks/archcore.json`, `bash` field) |
+| `cmd/hooks_common.go` | `buildSessionContext()` — the injected session-start text |
 
 ### Shared Handler Pattern
 
-All agents share the same handler logic through factory functions in `cmd/hooks_claude_code.go`:
-
-- `newSessionStartHookCmd(use, short)` — calls `handleSessionStart()` which uses `buildSessionContext()`
-- `newStopHookCmd(use, short)` — calls `handleStop()` which uses `checkStopKeywords()`
-- `newPromptHookCmd(use, short, eventName)` — calls `handleUserPromptSubmit()` which uses `checkPromptKeywords()`
-
-Each agent registers its subcommands using these factories with agent-specific event names.
+All hook-supporting agents share `newSessionStartHookCmd(use, short, version)` from `cmd/hooks_claude_code.go`, which invokes `handleSessionStart()` that delegates to `buildSessionContext()`. Each agent registers its subcommand using this factory with its own event name and config format.
 
 ### Event Coverage by Agent
 
-| Event | Claude Code | Cursor | Gemini CLI |
-|-------|-------------|--------|------------|
-| Session Start | `SessionStart` | `sessionStart` | `SessionStart` |
-| Stop | `Stop` | `stop` | — |
-| Prompt Submit | `UserPromptSubmit` | `beforeSubmitPrompt` | `BeforeAgent` |
+| Agent          | Config File                   | Event          |
+|----------------|-------------------------------|----------------|
+| Claude Code    | `.claude/settings.json`       | `SessionStart` |
+| Cursor         | `.cursor/hooks.json`          | `sessionStart` |
+| Gemini CLI     | `.gemini/settings.json`       | `SessionStart` |
+| GitHub Copilot | `.github/hooks/archcore.json` | `sessionStart` |
 
-### Modifying Keywords
+### Modifying the Injected Context
 
-Stop keywords and prompt keywords are defined in `cmd/hooks_common.go`:
-
-- **Stop keywords** (`stopKeywords` slice, line 153) — add new phrases with a document type and suggested filename
-- **Prompt keywords** (`promptKeywords` slice, line 185) — add new phrases; set `IsRegex: true` for patterns with regex metacharacters
-- **Instruction templates** (constants `adrInstruction`, `planInstruction`, `cpatInstruction`, line 211) — modify or add new instruction text
-
-See [CLI Hooks Reference](cli-hooks-reference.doc.md) for the full keyword tables.
+`buildSessionContext()` in `cmd/hooks_common.go` builds the session-start text: header, existing documents grouped by virtual category, top tag frequencies, document-relation summary, and a pointer to the MCP server instructions. Changes here apply uniformly to every hook-supporting agent.
 
 ## How to Add a New Agent
 
@@ -166,15 +157,15 @@ To add support for a new AI coding agent:
 4. **Add tests** — Create `internal/agents/<name>_test.go` covering detection, MCP config writing, and idempotency
 
 5. **If hooks are supported:**
-   - Create `cmd/hooks_<name>.go` with a `newHooksXxxCmd()` subcommand using the shared factories
+   - Create `cmd/hooks_<name>.go` with a `newHooksXxxCmd()` subcommand using `newSessionStartHookCmd`
    - Create `cmd/hooks_<name>_test.go`
    - Add a `runXxxHooksInstall()` function for writing the agent's hooks config
    - Register the subcommand in `cmd/hooks.go:newHooksCmd()`
    - Add the agent case to `installHooksForAgent()` in `cmd/hooks.go`
 
 6. **Update documentation:**
-   - Add the agent to [Supported AI Agents Registry](supported-ai-agents.rule.md)
-   - Add config examples to [Agent Integration Guide](agent-hooks-integration.guide.md)
+   - Add the agent to [Supported AI Agents Registry](../integrations/supported-ai-agents.doc.md)
+   - Add config examples to [Agent Integration Guide](../integrations/agent-hooks-integration.guide.md)
 
 ## Key Design Patterns
 
@@ -183,8 +174,8 @@ To add support for a new AI coding agent:
 - **Version-aware commands** — commands needing the CLI version (like `update`) receive it as a parameter from `NewRootCmd`.
 - **Interactive forms** — `charmbracelet/huh` for interactive input, with flag-based fallbacks.
 - **Co-located tests** — every command and package has adjacent `_test.go` files using `t.TempDir()` and table-driven subtests.
-- **Shared hook handlers** — all agents use the same `handleSessionStart`, `handleStop`, `handleUserPromptSubmit` functions via command factories, differing only in event names and config format.
-- **Invalid config backup** — corrupted config files are backed up as `.bak` before being overwritten. See [Backup Invalid Configs](backup-invalid-configs.adr.md).
+- **Shared session-start handler** — all hook-supporting agents use the same `handleSessionStart` and `buildSessionContext` via the `newSessionStartHookCmd` factory, differing only in event name and config format.
+- **Invalid config backup** — corrupted config files are backed up as `.bak` before being overwritten. See [Backup Invalid Configs](../integrations/backup-invalid-configs.adr.md).
 
 ## Key Dependencies
 

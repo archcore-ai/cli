@@ -1,5 +1,5 @@
 ---
-title: Integrating Archcore with AI Coding Agents
+title: "Integrating Archcore with AI Coding Agents"
 status: accepted
 ---
 
@@ -7,10 +7,10 @@ status: accepted
 
 Archcore integrates with AI coding agents via two mechanisms:
 
-- **Hooks** — Lifecycle event interception (session start, stop, prompt submit) to inject context and detect documentation opportunities. Supported by Claude Code, Cursor, and Gemini CLI.
-- **MCP** — Model Context Protocol server providing document management tools (`list_documents`, `get_document`, `create_document`, `update_document`). Supported by all agents except Cline (manual setup).
+- **Hooks** — Lifecycle event interception (session start) to inject context. Supported by Claude Code, Cursor, Gemini CLI, and GitHub Copilot. Only the `SessionStart` event is active — see [Disable Stop and Prompt Hooks ADR](disable-stop-and-prompt-hooks.adr.md).
+- **MCP** — Model Context Protocol server providing document management tools (`list_documents`, `get_document`, `create_document`, `update_document`, `remove_document`, `add_relation`, `remove_relation`, `list_relations`). Supported by all agents except Cline (manual setup).
 
-See [Supported AI Agents Registry](supported-ai-agents.rule.md) for the full agent list and capabilities.
+See [Supported AI Agents Registry](supported-ai-agents.doc.md) for the full agent list and capabilities.
 
 ## Quick Start
 
@@ -22,11 +22,11 @@ archcore init
 
 1. Creates the `.archcore/` directory structure
 2. Detects installed agents by checking for marker directories (`.claude/`, `.cursor/`, `.gemini/`, etc.)
-3. Falls back to Claude Code if no agents are detected
-4. Installs hooks for agents that support them (Claude Code, Cursor, Gemini CLI)
+3. If no agents are detected, prompts the user to pick one (or skips in non-interactive mode)
+4. Installs hooks for agents that support them (Claude Code, Cursor, Gemini CLI, GitHub Copilot)
 5. Installs MCP config for all detected agents
 
-Source: `cmd/init.go:126-138`
+Source: `cmd/init.go` (`installHooksForAgent` + `installMCPForAgent` loop).
 
 No further action is needed for most setups.
 
@@ -52,40 +52,43 @@ archcore mcp install --agent codex-cli  # install for a specific agent
 
 Archcore detects agents by checking for marker directories or files in the project root:
 
-| Agent       | Marker                                         |
-| ----------- | ---------------------------------------------- |
-| Claude Code | `.claude/` directory                           |
-| Cursor      | `.cursor/` directory                           |
-| Gemini CLI  | `.gemini/` directory                           |
-| OpenCode    | `opencode.json` file or `.opencode/` directory |
-| Codex CLI   | `.codex/` directory                            |
-| Roo Code    | `.roo/` directory                              |
-| Cline       | `.clinerules/` directory                       |
+| Agent          | Marker                                         |
+| -------------- | ---------------------------------------------- |
+| Claude Code    | `.claude/` directory                           |
+| Cursor         | `.cursor/` directory                           |
+| Gemini CLI     | `.gemini/` directory                           |
+| GitHub Copilot | `.github/copilot-instructions.md` file         |
+| OpenCode       | `opencode.json` file or `.opencode/` directory |
+| Codex CLI      | `.codex/` directory                            |
+| Roo Code       | `.roo/` directory                              |
+| Cline          | `.clinerules/` directory                       |
 
-If no markers are found, archcore defaults to installing for Claude Code.
+If no markers are found, archcore prompts the user interactively or skips when running non-interactively.
 
-Source: `internal/agents/agents.go:67-76` (`Detect` function), individual agent `DetectFn` in `internal/agents/*.go`
+Source: `internal/agents/agents.go` (`Detect` function), individual agent `DetectFn` in `internal/agents/*.go`.
 
 ## What Gets Installed
 
-### Hooks (3 agents)
+### Hooks (4 agents, SessionStart only)
 
-| Agent       | Config File             | Events                                       |
-| ----------- | ----------------------- | -------------------------------------------- |
-| Claude Code | `.claude/settings.json` | `SessionStart`, `Stop`, `UserPromptSubmit`   |
-| Cursor      | `.cursor/hooks.json`    | `sessionStart`, `stop`, `beforeSubmitPrompt` |
-| Gemini CLI  | `.gemini/settings.json` | `SessionStart`, `BeforeAgent`                |
+| Agent          | Config File                   | Event          |
+| -------------- | ----------------------------- | -------------- |
+| Claude Code    | `.claude/settings.json`       | `SessionStart` |
+| Cursor         | `.cursor/hooks.json`          | `sessionStart` |
+| Gemini CLI     | `.gemini/settings.json`       | `SessionStart` |
+| GitHub Copilot | `.github/hooks/archcore.json` | `sessionStart` |
 
-### MCP (6 agents, Cline is manual)
+### MCP (7 agents, Cline is manual)
 
-| Agent       | Config File             | Format                                             |
-| ----------- | ----------------------- | -------------------------------------------------- |
-| Claude Code | `.mcp.json`             | Standard `mcpServers` JSON                         |
-| Cursor      | `.cursor/mcp.json`      | Standard `mcpServers` JSON                         |
-| Gemini CLI  | `.gemini/settings.json` | Standard `mcpServers` JSON (shared with hooks)     |
-| OpenCode    | `opencode.json`         | Custom `mcp` section with `type` + `command` array |
-| Codex CLI   | `.codex/config.toml`    | TOML `[mcp_servers.archcore]` block                |
-| Roo Code    | `.roo/mcp.json`         | Standard `mcpServers` JSON                         |
+| Agent          | Config File             | Format                                             |
+| -------------- | ----------------------- | -------------------------------------------------- |
+| Claude Code    | `.mcp.json`             | Standard `mcpServers` JSON                         |
+| Cursor         | `.cursor/mcp.json`      | Standard `mcpServers` JSON                         |
+| Gemini CLI     | `.gemini/settings.json` | Standard `mcpServers` JSON (shared with hooks)     |
+| GitHub Copilot | `.vscode/mcp.json`      | VS Code-style `servers` JSON with `"type": "stdio"` |
+| OpenCode       | `opencode.json`         | Custom `mcp` section with `type` + `command` array |
+| Codex CLI      | `.codex/config.toml`    | TOML `[mcp_servers.archcore]` block                |
+| Roo Code       | `.roo/mcp.json`         | Standard `mcpServers` JSON                         |
 
 ## Per-Agent Config Examples
 
@@ -96,10 +99,6 @@ Source: `internal/agents/agents.go:67-76` (`Detect` function), individual agent 
   "hooks": {
     "SessionStart": [
       { "matcher": "", "hooks": [{ "type": "command", "command": "archcore hooks claude-code session-start" }] }
-    ],
-    "Stop": [{ "matcher": "", "hooks": [{ "type": "command", "command": "archcore hooks claude-code stop" }] }],
-    "UserPromptSubmit": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "archcore hooks claude-code user-prompt-submit" }] }
     ]
   }
 }
@@ -121,9 +120,7 @@ Source: `internal/agents/agents.go:67-76` (`Detect` function), individual agent 
 {
   "version": 1,
   "hooks": {
-    "sessionStart": [{ "command": "archcore hooks cursor session-start", "type": "command" }],
-    "stop": [{ "command": "archcore hooks cursor stop", "type": "command" }],
-    "beforeSubmitPrompt": [{ "command": "archcore hooks cursor before-submit-prompt", "type": "command" }]
+    "sessionStart": [{ "command": "archcore hooks cursor session-start", "type": "command" }]
   }
 }
 ```
@@ -145,13 +142,31 @@ Source: `internal/agents/agents.go:67-76` (`Detect` function), individual agent 
   "hooks": {
     "SessionStart": [
       { "matcher": "", "hooks": [{ "type": "command", "command": "archcore hooks gemini-cli session-start" }] }
-    ],
-    "BeforeAgent": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "archcore hooks gemini-cli before-agent" }] }
     ]
   },
   "mcpServers": {
     "archcore": { "command": "archcore", "args": ["mcp"] }
+  }
+}
+```
+
+### GitHub Copilot — `.github/hooks/archcore.json`
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [{ "type": "command", "bash": "archcore hooks copilot session-start" }]
+  }
+}
+```
+
+### GitHub Copilot — `.vscode/mcp.json`
+
+```json
+{
+  "servers": {
+    "archcore": { "type": "stdio", "command": "archcore", "args": ["mcp"] }
   }
 }
 ```
