@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "Error: this installer requires bash. Re-run with:" >&2
+    echo "  curl -fsSL https://archcore.ai/install.sh | bash" >&2
+    exit 1
+fi
+
 set -euo pipefail
 
 # ── Constants ────────────────────────────────────────────────────────────────

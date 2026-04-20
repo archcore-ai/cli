@@ -73,12 +73,11 @@ curl -fsSL https://archcore.ai/install.sh | bash
 
 ### Windows
 
-Download `archcore.exe` from the [latest release](https://github.com/archcore-ai/cli/releases/latest) and add it to your `PATH`.
-
 ```powershell
-# Example: move to a directory in your PATH
-Move-Item archcore.exe C:\Users\$env:USERNAME\.local\bin\
+irm https://archcore.ai/install.ps1 | iex
 ```
+
+Installs `archcore.exe` under `%LOCALAPPDATA%\Programs\archcore` and adds it to your user `PATH`. Open a new PowerShell window after install so the `PATH` change is picked up.
 
 ### Windows (WSL)
 

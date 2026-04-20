@@ -17,7 +17,8 @@ The Archcore CLI uses a tag-driven release pipeline: pushing a `v*` tag triggers
 | Cobra integration | `cmd/root.go` | `NewRootCmd(version, commit)` sets `Version` field and version template |
 | GoReleaser config | `.goreleaser.yaml` | Defines build matrix, archive naming, checksums |
 | GitHub Actions | `.github/workflows/release.yml` | Orchestrates test → build → publish on tag push |
-| Install script | `install.sh` | End-user installer that downloads release artifacts |
+| Install script (Unix) | `install.sh` | End-user installer for macOS/Linux — downloads `.tar.gz` release artifacts |
+| Install script (Windows) | `install.ps1` | PowerShell installer for Windows amd64/arm64 — downloads `.zip` release artifacts |
 | Self-update | `internal/update/update.go` | In-binary update: check latest version, download, verify checksum, atomic replace |
 | Update command | `cmd/update.go` | `archcore update` — user-facing self-update command |
 
@@ -33,7 +34,7 @@ All builds use `CGO_ENABLED=0` for static binaries and `-s -w` ldflags to strip 
 
 ### Artifact Naming
 
-Archives follow the pattern `archcore_<os>_<arch>.tar.gz` for darwin/linux and `archcore_<os>_<arch>.zip` for windows (e.g. `archcore_darwin_arm64.tar.gz`, `archcore_windows_amd64.zip`). This matches what `install.sh` and `archcore update` expect for unix platforms. Windows users download the zip directly from the GitHub release page.
+Archives follow the pattern `archcore_<os>_<arch>.tar.gz` for darwin/linux and `archcore_<os>_<arch>.zip` for windows (e.g. `archcore_darwin_arm64.tar.gz`, `archcore_windows_amd64.zip`). Unix archives are consumed by `install.sh` and `archcore update`; Windows zips are consumed transparently by `install.ps1`.
 
 A `checksums.txt` file with SHA-256 hashes is included in every release for verification.
 
@@ -48,8 +49,10 @@ The version template is set via `SetVersionTemplate` on the cobra root command.
 
 Users can update the CLI via:
 
-1. **`archcore update`** — self-update command that downloads and replaces the binary in-place
-2. **Re-running install script** — `curl -fsSL https://archcore.ai/install.sh | bash`
+1. **`archcore update`** — self-update command that downloads and replaces the binary in-place (macOS/Linux; Windows support is on the roadmap, see `internal/update/update.go`)
+2. **Re-running the install script:**
+   - macOS/Linux: `curl -fsSL https://archcore.ai/install.sh | bash`
+   - Windows: `irm https://archcore.ai/install.ps1 | iex`
 3. **`go install`** — `go install github.com/archcore-ai/cli@latest`
 
 ### Secrets
