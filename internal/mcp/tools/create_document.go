@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"archcore-cli/internal/sync"
 	"archcore-cli/templates"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -61,7 +60,7 @@ Document types and when to use each:
   srs       — Software requirements specification (ISO 29148 §9.6): formalized software component requirements
                 § required sections: Purpose and Scope, Product Perspective (incl. Assumptions/Dependencies), Software Requirements, External Interfaces, Data Requirements, Usability Requirements, Performance, Design Constraints, Software Quality Attributes, Verification Matrix, Traceability
 
-Returns: JSON with path, type, category, title, status, tags (when present), and optionally nearby_documents — paths of other documents in the same directory that may warrant adding a relation.`),
+Returns: JSON with path, type, category, title, status, tags (when present), and optionally nearby_documents — paths of other documents in the same directory. Treat nearby_documents as a hint only: review each candidate and call add_relation explicitly when a semantic link exists. Do not link every neighbor by default.`),
 		mcp.WithString("type",
 			mcp.Description("Document type. Choose based on the nature of the content, not the topic. If uncertain between adr and rfc: use adr only if the decision is already final."),
 			mcp.Required(),
@@ -198,7 +197,7 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 			result["tags"] = tags
 		}
 
-		addNearbyRelations(baseDir, relPath, result)
+		populateNearbyDocuments(baseDir, relPath, result)
 
 		data, err := json.Marshal(result)
 		if err != nil {
@@ -209,10 +208,10 @@ func HandleCreateDocument(baseDir string) func(ctx context.Context, request mcp.
 	}
 }
 
-// addNearbyRelations scans for other documents in the same directory as relPath,
-// populates result["nearby_documents"], and auto-creates "related" relations
-// between the new document and its neighbors.
-func addNearbyRelations(baseDir, relPath string, result map[string]any) {
+// populateNearbyDocuments scans for other documents in the same directory as
+// relPath and exposes them as a hint in result["nearby_documents"]. The agent
+// decides whether any of them warrants an explicit relation via add_relation.
+func populateNearbyDocuments(baseDir, relPath string, result map[string]any) {
 	allDocs, scanErr := ScanDocuments(baseDir)
 	if scanErr != nil {
 		return
@@ -225,32 +224,8 @@ func addNearbyRelations(baseDir, relPath string, result map[string]any) {
 			nearby = append(nearby, d.Path)
 		}
 	}
-	if len(nearby) == 0 {
-		return
-	}
-
-	result["nearby_documents"] = nearby
-
-	// Auto-add "related" relations between the new doc and nearby docs.
-	m, loadErr := sync.LoadManifest(baseDir)
-	if loadErr != nil {
-		return
-	}
-	// relPath is ".archcore/dir/file.md", normalize to "dir/file.md"
-	newDocRel := normalizeRelPath(relPath)
-	var added []string
-	for _, np := range nearby {
-		nearbyRel := normalizeRelPath(np)
-		if m.AddRelation(newDocRel, nearbyRel, sync.RelRelated) {
-			added = append(added, np)
-		}
-	}
-	if len(added) > 0 {
-		if saveErr := sync.SaveManifest(baseDir, m); saveErr != nil {
-			result["auto_relations_error"] = saveErr.Error()
-		} else {
-			result["auto_relations_added"] = added
-		}
+	if len(nearby) > 0 {
+		result["nearby_documents"] = nearby
 	}
 }
 

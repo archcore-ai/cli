@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"archcore-cli/internal/sync"
-
 	"github.com/mark3labs/mcp-go/mcp"
+
+	"archcore-cli/internal/sync"
 )
 
 func TestHandleCreateDocument_Success(t *testing.T) {
@@ -480,27 +480,16 @@ func TestHandleCreateDocument_NearbyDocuments(t *testing.T) {
 		t.Errorf("nearby_documents = %v, want to contain existing.adr.md", arr)
 	}
 
-	// Verify auto-created relations.
-	autoRels, ok := info["auto_relations_added"]
-	if !ok {
-		t.Fatal("expected auto_relations_added in response")
+	// nearby_documents is a hint only: no relations should be auto-created.
+	if _, ok := info["auto_relations_added"]; ok {
+		t.Error("unexpected auto_relations_added: create_document must not auto-link neighbors")
 	}
-	relArr := autoRels.([]any)
-	if len(relArr) != 1 || relArr[0] != ".archcore/auth/existing.adr.md" {
-		t.Errorf("auto_relations_added = %v, want [.archcore/auth/existing.adr.md]", relArr)
-	}
-
-	// Verify relation persisted in manifest.
 	m, err := sync.LoadManifest(base)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(m.Relations) != 1 {
-		t.Fatalf("expected 1 relation, got %d", len(m.Relations))
-	}
-	rel := m.Relations[0]
-	if rel.Source != "auth/new-rule.rule.md" || rel.Target != "auth/existing.adr.md" || rel.Type != sync.RelRelated {
-		t.Errorf("relation = %+v, want auth/new-rule.rule.md -> auth/existing.adr.md (related)", rel)
+	if len(m.Relations) != 0 {
+		t.Fatalf("expected 0 relations, got %d (%+v)", len(m.Relations), m.Relations)
 	}
 }
 

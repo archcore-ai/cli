@@ -532,6 +532,11 @@
       "source": "integrations/agent-hooks-integration.guide.md",
       "target": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
       "type": "related"
+    },
+    {
+      "source": "relations/no-auto-relations-on-create-document.adr.md",
+      "target": "relations/local-relations-in-sync-state.adr.md",
+      "type": "extends"
     }
   ]
 }
