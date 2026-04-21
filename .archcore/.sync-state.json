@@ -507,6 +507,31 @@
       "source": "code-quality/e2e-testing-for-cli.idea.md",
       "target": "code-quality/unit-testing-patterns.guide.md",
       "type": "related"
+    },
+    {
+      "source": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "target": "mcp/no-absolute-paths-in-mcp-errors.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "target": "mcp/no-list-tags-tool.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "target": "mcp/tag-update-semantics.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "target": "mcp/tags-implementation.plan.md",
+      "type": "related"
+    },
+    {
+      "source": "integrations/agent-hooks-integration.guide.md",
+      "target": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "type": "related"
     }
   ]
 }

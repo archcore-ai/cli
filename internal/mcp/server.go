@@ -1,14 +1,18 @@
 package mcp
 
 import (
-	"archcore-cli/internal/config"
-	"archcore-cli/internal/mcp/tools"
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/server"
+
+	"archcore-cli/internal/config"
+	"archcore-cli/internal/mcp/tools"
 )
 
 var mcpServerInstructions = `You are working with a project that uses Archcore — Git-native context for AI coding agents.
+
+PROJECT INITIALIZATION:
+If list_documents returns an empty result AND the user is asking to create or manage documents, the project likely has no .archcore/ directory yet. Call init_project once to initialize it, then proceed. init_project is idempotent — safe to call even if already initialized (it just returns existing settings). Do NOT attempt to create documents before the project is initialized; create_document and other mutating tools assume .archcore/ exists.
 
 The .archcore/ directory contains Markdown files with YAML frontmatter (title, status, tags). The directory structure inside .archcore/ is free-form — you can organize documents by domain, feature, team, or any custom structure. Categories (vision, knowledge, experience) are virtual — derived automatically from the document type in the filename (slug.type.md), not from the physical directory.
 
@@ -163,6 +167,7 @@ func NewServer(baseDir string) *server.MCPServer {
 		server.WithInstructions(buildInstructions(language)),
 	)
 
+	s.AddTool(tools.NewInitProjectTool(), tools.HandleInitProject(baseDir))
 	s.AddTool(tools.NewListDocumentsTool(), tools.HandleListDocuments(baseDir))
 	s.AddTool(tools.NewGetDocumentTool(), tools.HandleGetDocument(baseDir))
 	s.AddTool(tools.NewCreateDocumentTool(), tools.HandleCreateDocument(baseDir))

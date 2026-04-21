@@ -11,8 +11,5 @@
         ]
       }
     ]
-  },
-  "enabledPlugins": {
-    "archcore@archcore-plugins": true
   }
 }

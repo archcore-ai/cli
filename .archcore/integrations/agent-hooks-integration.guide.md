@@ -8,11 +8,15 @@ status: accepted
 Archcore integrates with AI coding agents via two mechanisms:
 
 - **Hooks** — Lifecycle event interception (session start) to inject context. Supported by Claude Code, Cursor, Gemini CLI, and GitHub Copilot. Only the `SessionStart` event is active — see [Disable Stop and Prompt Hooks ADR](disable-stop-and-prompt-hooks.adr.md).
-- **MCP** — Model Context Protocol server providing document management tools (`list_documents`, `get_document`, `create_document`, `update_document`, `remove_document`, `add_relation`, `remove_relation`, `list_relations`). Supported by all agents except Cline (manual setup).
+- **MCP** — Model Context Protocol server providing document management tools (`init_project`, `list_documents`, `get_document`, `create_document`, `update_document`, `remove_document`, `add_relation`, `remove_relation`, `list_relations`). Supported by all agents except Cline (manual setup).
 
 See [Supported AI Agents Registry](supported-ai-agents.doc.md) for the full agent list and capabilities.
 
 ## Quick Start
+
+Two paths are supported. Pick whichever matches how the user is onboarding.
+
+### Path A — Shell-first (`archcore init`)
 
 ```bash
 archcore init
@@ -28,7 +32,15 @@ archcore init
 
 Source: `cmd/init.go` (`installHooksForAgent` + `installMCPForAgent` loop).
 
-No further action is needed for most setups.
+### Path B — Agent-first (MCP `init_project`)
+
+If the MCP config is already installed globally in the agent, the user can skip the shell step entirely:
+
+1. Start the agent in a repo without `.archcore/`. The MCP server boots normally and prints a hint that only `init_project` is useful until initialized.
+2. The agent calls the `init_project` MCP tool (optionally with `language` / `sync_mode`). It creates `.archcore/settings.json` in-process.
+3. From that point on, the rest of the MCP tools (`create_document`, etc.) work normally.
+
+`init_project` is idempotent — calling it on an already-initialized project preserves existing settings. See [MCP Server Starts Without .archcore/](../mcp/mcp-server-starts-without-archcore-dir.adr.md) for the architectural decision.
 
 ## Manual Installation
 
@@ -216,9 +228,10 @@ See [Backup Invalid Configs](backup-invalid-configs.adr.md) for the full decisio
 
 ## Troubleshooting
 
-### "`.archcore/` not found" error
+### `.archcore/` not initialized
 
-Run `archcore init` first. All hooks and MCP commands require an initialized project.
+- The **MCP server** (`archcore mcp`) starts fine without `.archcore/` — it exposes `init_project` so the agent can bootstrap the directory in-session. If the agent sees an empty `list_documents` result and wants to create documents, it should call `init_project` first.
+- **Hooks** and the `archcore hooks/mcp install` commands still require an initialized project. Run `archcore init` first, or ask the agent to call `init_project`.
 
 ### Agent not detected
 

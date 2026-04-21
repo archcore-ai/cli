@@ -1,15 +1,16 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"archcore-cli/internal/agents"
 	"archcore-cli/internal/config"
 	"archcore-cli/internal/display"
 	mcpserver "archcore-cli/internal/mcp"
-
-	"github.com/spf13/cobra"
 )
 
 func newMCPCmd() *cobra.Command {
@@ -18,17 +19,19 @@ func newMCPCmd() *cobra.Command {
 		Short: "MCP stdio server for archcore documents",
 		Long:  "Starts an MCP (Model Context Protocol) stdio server that exposes archcore document tools.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(os.Stderr, display.WelcomeBanner())
-			fmt.Fprintln(os.Stderr)
-			fmt.Fprintln(os.Stderr, display.Dim.Render("  MCP server running on stdio..."))
-
 			cwd, err := os.Getwd()
 			if err != nil {
 				return err
 			}
+
+			fmt.Fprintln(os.Stderr, display.WelcomeBanner())
+			fmt.Fprintln(os.Stderr)
 			if !config.DirExists(cwd) {
-				return fmt.Errorf(".archcore/ not found — run 'archcore init' first")
+				fmt.Fprintln(os.Stderr, display.Dim.Render("  MCP server running on stdio (uninitialized project — only init_project tool is useful until the agent initializes .archcore/)..."))
+			} else {
+				fmt.Fprintln(os.Stderr, display.Dim.Render("  MCP server running on stdio..."))
 			}
+
 			return mcpserver.RunStdio(cwd)
 		},
 	}
@@ -49,7 +52,7 @@ func newMCPInstallCmd() *cobra.Command {
 				return err
 			}
 			if !config.DirExists(cwd) {
-				return fmt.Errorf(".archcore/ not found — run 'archcore init' first")
+				return errors.New(".archcore/ not found — run 'archcore init' first")
 			}
 
 			if agentFlag != "" {
@@ -66,7 +69,7 @@ func newMCPInstallCmd() *cobra.Command {
 // runMCPInstallForAgent installs MCP config for a specific agent.
 func runMCPInstallForAgent(baseDir string, id agents.AgentID) error {
 	if !config.DirExists(baseDir) {
-		return fmt.Errorf(".archcore/ not found — run 'archcore init' first")
+		return errors.New(".archcore/ not found — run 'archcore init' first")
 	}
 	agent := agents.ByID(id)
 	if agent == nil {
