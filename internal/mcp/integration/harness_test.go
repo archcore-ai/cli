@@ -49,7 +49,11 @@ func newTestClient(t *testing.T, baseDir string) *client.Client {
 	if err != nil {
 		t.Fatalf("NewInProcessClient: %v", err)
 	}
-	t.Cleanup(func() { _ = c.Close() })
+	t.Cleanup(func() {
+		if err := c.Close(); err != nil {
+			t.Errorf("client.Close: %v", err)
+		}
+	})
 
 	ctx := context.Background()
 	if err := c.Start(ctx); err != nil {
@@ -132,7 +136,7 @@ func firstText(result *mcp.CallToolResult) string {
 		return ""
 	}
 	for _, c := range result.Content {
-		if tc, ok := c.(mcp.TextContent); ok {
+		if tc, ok := mcp.AsTextContent(c); ok {
 			return tc.Text
 		}
 	}

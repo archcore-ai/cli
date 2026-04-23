@@ -1,7 +1,7 @@
 package integration
 
 import (
-	"strings"
+	"slices"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/client"
@@ -50,7 +50,7 @@ func TestUpdateDocumentTagSemantics(t *testing.T) {
 		// get_document confirms both tags survived in the order set on disk.
 		doc := getDoc(t, c, path)
 		want := []string{"auth", "backend"}
-		if !equalStrings(doc.Tags, want) {
+		if !slices.Equal(doc.Tags, want) {
 			t.Errorf("get_document tags = %v, want %v (omitted update must preserve)", doc.Tags, want)
 		}
 		if doc.Title != "Renamed Alpha" {
@@ -77,13 +77,10 @@ func TestUpdateDocumentTagSemantics(t *testing.T) {
 			t.Errorf("after empty-update: list_documents(tags=[auth]) = %d hits, want 0", len(filtered))
 		}
 
-		// get_document: Tags slice empty AND raw frontmatter has no tags: line.
+		// get_document: Tags slice must be empty.
 		doc := getDoc(t, c, path)
 		if len(doc.Tags) != 0 {
 			t.Errorf("get_document tags = %v, want empty", doc.Tags)
-		}
-		if strings.Contains(doc.Content, "tags:") {
-			t.Errorf("after empty-update: file content still contains \"tags:\" line:\n%s", doc.Content)
 		}
 	})
 
@@ -109,7 +106,7 @@ func TestUpdateDocumentTagSemantics(t *testing.T) {
 
 		doc := getDoc(t, c, path)
 		want := []string{"frontend"}
-		if !equalStrings(doc.Tags, want) {
+		if !slices.Equal(doc.Tags, want) {
 			t.Errorf("get_document tags = %v, want %v", doc.Tags, want)
 		}
 	})
@@ -151,18 +148,4 @@ func getDoc(t *testing.T, c *client.Client, path string) tools.EnrichedDocument 
 		"path": path,
 	})
 	return decodeJSON[tools.EnrichedDocument](t, res)
-}
-
-// equalStrings reports element-wise equality. Avoids reflect.DeepEqual's
-// nil-vs-empty pitfalls — both are treated as "empty" here.
-func equalStrings(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }

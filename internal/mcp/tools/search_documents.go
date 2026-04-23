@@ -1,9 +1,12 @@
 package tools
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -24,13 +27,24 @@ import (
 const typePriorityDefault = 100
 
 var typePriority = map[string]int{
-	"rule":  1,
-	"adr":   2,
-	"spec":  3,
-	"cpat":  4,
-	"guide": 5,
-	"plan":  6,
-	"idea":  7,
+	"rule":      1,
+	"adr":       2,
+	"rfc":       3,
+	"spec":      4,
+	"cpat":      5,
+	"guide":     6,
+	"plan":      7,
+	"idea":      8,
+	"prd":       9,
+	"brs":       10,
+	"syrs":      11,
+	"srs":       12,
+	"strs":      13,
+	"mrd":       14,
+	"brd":       15,
+	"urd":       16,
+	"doc":       17,
+	"task-type": 18,
 }
 
 const (
@@ -83,9 +97,9 @@ type pathRef struct {
 
 var (
 	// Explicit @-prefixed references.
-	pathRefExplicitRe = regexp.MustCompile(`@[\w./\-_]+`)
+	pathRefExplicitRe = regexp.MustCompile(`@[\w./-]+`)
 	// Bare mention candidates: identifier / path.
-	pathRefBareRe = regexp.MustCompile(`[\w\-_]+/[\w\-_./]+`)
+	pathRefBareRe = regexp.MustCompile(`[\w-]+/[\w./-]+`)
 )
 
 // NewSearchDocumentsTool returns the tool definition for search_documents.
@@ -180,7 +194,7 @@ func HandleSearchDocuments(baseDir string) func(ctx context.Context, request mcp
 		var manifest *sync.Manifest
 		if m, mErr := sync.LoadManifest(baseDir); mErr == nil {
 			manifest = m
-		} else {
+		} else if !errors.Is(mErr, fs.ErrNotExist) {
 			fmt.Fprintf(os.Stderr, "search_documents: failed to load manifest: %v\n", mErr)
 		}
 
@@ -357,24 +371,21 @@ func extractPathRefs(body string) []pathRef {
 	// Explicit first — we record their offsets so we can skip bare hits that
 	// overlap (the bare regex would otherwise re-match the same token minus
 	// the leading "@").
-	type span struct{ start, end int }
-	var explicitSpans []span
-	for _, m := range pathRefExplicitRe.FindAllStringIndex(body, -1) {
+	explicitSpans := pathRefExplicitRe.FindAllStringIndex(body, -1)
+	for _, m := range explicitSpans {
 		refs = append(refs, pathRef{
 			Raw:   body[m[0]:m[1]],
 			Kind:  "explicit",
 			Start: m[0],
 		})
-		explicitSpans = append(explicitSpans, span{m[0], m[1]})
 	}
 	for _, m := range pathRefBareRe.FindAllStringIndex(body, -1) {
-		start := m[0]
-		end := m[1]
+		start, end := m[0], m[1]
 		// Skip bare matches covered by an explicit match (explicit spans include
-		// the leading '@', so the bare match starts at s.start+1).
+		// the leading '@', so the bare match starts at s[0]+1).
 		overlap := false
 		for _, s := range explicitSpans {
-			if start >= s.start && end <= s.end {
+			if start >= s[0] && end <= s[1] {
 				overlap = true
 				break
 			}
@@ -548,18 +559,11 @@ func sortResults(results []searchResult, mode string) {
 		if mode == "mtime" {
 			return b.ModTime.Compare(a.ModTime)
 		}
-		// Relevance: higher specificity first, then lower rank (higher priority), then newer.
-		if a.maxSpecificity != b.maxSpecificity {
-			if a.maxSpecificity > b.maxSpecificity {
-				return -1
-			}
-			return 1
+		if c := cmp.Compare(b.maxSpecificity, a.maxSpecificity); c != 0 {
+			return c
 		}
-		if a.typeRank != b.typeRank {
-			if a.typeRank < b.typeRank {
-				return -1
-			}
-			return 1
+		if c := cmp.Compare(a.typeRank, b.typeRank); c != 0 {
+			return c
 		}
 		return b.ModTime.Compare(a.ModTime)
 	})

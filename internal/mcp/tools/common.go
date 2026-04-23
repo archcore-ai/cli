@@ -72,15 +72,11 @@ func scanDocuments(baseDir string, includeContent bool) ([]LocalDocument, error)
 		var fm templates.Frontmatter
 		if readErr == nil {
 			fm, _ = templates.SplitDocument(data)
-		} else {
-			fmt.Fprintf(os.Stderr, "scanDocuments: failed to read %s: %v\n", path, readErr)
 		}
 
 		var modTime time.Time
 		if info, infoErr := d.Info(); infoErr == nil {
 			modTime = info.ModTime()
-		} else {
-			fmt.Fprintf(os.Stderr, "scanDocuments: failed to stat %s: %v\n", path, infoErr)
 		}
 
 		relPath, _ := filepath.Rel(baseDir, path)

@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
@@ -11,29 +11,26 @@ import (
 	"archcore-cli/internal/mcp/tools"
 )
 
-// expectedTools is the canonical set the server is expected to register.
-// Mirrors NewServer in internal/mcp/server.go. Updating this list is the
-// signal that a registered tool was added or removed; the test below is the
-// guard that registration matches.
-var expectedTools = []string{
-	"add_relation",
-	"create_document",
-	"get_document",
-	"init_project",
-	"list_documents",
-	"list_relations",
-	"remove_document",
-	"remove_relation",
-	"search_documents",
-	"update_document",
-}
-
 // TestToolRegistrationCanary asserts that the in-process server registers
 // exactly the expected tools. A deleted s.AddTool(...) line in server.go
 // would slip through every per-tool unit test (which calls handlers
 // directly) — this test is the cheapest place to catch it.
 func TestToolRegistrationCanary(t *testing.T) {
 	t.Parallel()
+	expectedTools := []string{
+		"add_relation",
+		"create_document",
+		"get_document",
+		"init_project",
+		"list_documents",
+		"list_relations",
+		"remove_document",
+		"remove_relation",
+		"search_documents",
+		"update_document",
+	}
+	slices.Sort(expectedTools)
+
 	base := initArchcore(t)
 	c := newTestClient(t, base)
 
@@ -46,7 +43,7 @@ func TestToolRegistrationCanary(t *testing.T) {
 	for _, tool := range res.Tools {
 		got = append(got, tool.Name)
 	}
-	sort.Strings(got)
+	slices.Sort(got)
 
 	if len(got) != len(expectedTools) {
 		t.Fatalf("registered %d tools, want %d\ngot:  %v\nwant: %v",

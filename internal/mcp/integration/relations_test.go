@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -177,8 +176,10 @@ func TestAddRelationAcceptsBothPathForms(t *testing.T) {
 		{"without_prefix", "alpha.adr.md", "beta.adr.md"},
 	}
 
-	var manifestSnapshots [2][]sync.Relation
-	for i, tc := range cases {
+	const wantSrc = "alpha.adr.md"
+	const wantTgt = "beta.adr.md"
+
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			base := initArchcore(t)
@@ -199,14 +200,16 @@ func TestAddRelationAcceptsBothPathForms(t *testing.T) {
 			if len(snap) != 1 {
 				t.Fatalf("%s: manifest has %d relations, want 1", tc.name, len(snap))
 			}
-			manifestSnapshots[i] = snap
+			if snap[0].Source != wantSrc {
+				t.Errorf("%s: manifest source = %q, want %q (prefix must be stripped)", tc.name, snap[0].Source, wantSrc)
+			}
+			if snap[0].Target != wantTgt {
+				t.Errorf("%s: manifest target = %q, want %q (prefix must be stripped)", tc.name, snap[0].Target, wantTgt)
+			}
+			if snap[0].Type != sync.RelRelated {
+				t.Errorf("%s: manifest type = %q, want related", tc.name, snap[0].Type)
+			}
 		})
-	}
-
-	// Both forms must produce identical manifest state.
-	if !reflect.DeepEqual(manifestSnapshots[0], manifestSnapshots[1]) {
-		t.Errorf("manifest state differs between path forms:\n  with_prefix:    %+v\n  without_prefix: %+v",
-			manifestSnapshots[0], manifestSnapshots[1])
 	}
 }
 

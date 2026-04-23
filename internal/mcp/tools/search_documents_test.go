@@ -24,7 +24,7 @@ func unmarshalSearch(t *testing.T, result *mcp.CallToolResult) []searchResult {
 	if result.IsError {
 		var text string
 		if len(result.Content) > 0 {
-			if tc, ok := result.Content[0].(mcp.TextContent); ok {
+			if tc, ok := mcp.AsTextContent(result.Content[0]); ok {
 				text = tc.Text
 			}
 		}
@@ -33,7 +33,7 @@ func unmarshalSearch(t *testing.T, result *mcp.CallToolResult) []searchResult {
 	if len(result.Content) == 0 {
 		t.Fatal("empty content")
 	}
-	tc, ok := result.Content[0].(mcp.TextContent)
+	tc, ok := mcp.AsTextContent(result.Content[0])
 	if !ok {
 		t.Fatalf("unexpected content type %T", result.Content[0])
 	}
@@ -65,7 +65,7 @@ func TestHandleSearchDocuments_EmptyFilters(t *testing.T) {
 	if !result.IsError {
 		t.Fatal("expected error for empty filters")
 	}
-	tc, ok := result.Content[0].(mcp.TextContent)
+	tc, ok := mcp.AsTextContent(result.Content[0])
 	if !ok {
 		t.Fatalf("unexpected content type %T", result.Content[0])
 	}
@@ -372,6 +372,12 @@ func TestHandleSearchDocuments_LimitTruncation(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("expected 2 (limit), got %d", len(got))
 	}
+	if got[0].Title != "Te" {
+		t.Errorf("got[0].Title = %q, want %q (newest by mtime)", got[0].Title, "Te")
+	}
+	if got[1].Title != "Td" {
+		t.Errorf("got[1].Title = %q, want %q (second-newest by mtime)", got[1].Title, "Td")
+	}
 }
 
 func TestHandleSearchDocuments_SortRelevanceTypePriority(t *testing.T) {
@@ -433,6 +439,41 @@ func TestHandleSearchDocuments_SortMtimeIgnoresTypePriority(t *testing.T) {
 	}
 	if got[0].Type != "plan" {
 		t.Errorf("sort=mtime first type = %q, want plan", got[0].Type)
+	}
+}
+
+// TestHandleSearchDocuments_SortRelevanceExtendedTypes exercises the newly
+// ranked types in typePriority (rfc, doc) that previously fell back to
+// typePriorityDefault. rfc is rank 3, doc is rank 17 — rfc must win on
+// relevance even when doc is newer.
+func TestHandleSearchDocuments_SortRelevanceExtendedTypes(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.rfc.md",
+		"---\ntitle: RfcDoc\nstatus: accepted\n---\n\nalpha is in the body")
+	writeDoc(t, base, "knowledge", "b.doc.md",
+		"---\ntitle: DocDoc\nstatus: accepted\n---\n\nalpha is in the body")
+
+	// doc newer than rfc — pure mtime would invert them.
+	setMtime(t, base, ".archcore/knowledge/a.rfc.md", time.Now().Add(-2*time.Hour))
+	setMtime(t, base, ".archcore/knowledge/b.doc.md", time.Now().Add(-1*time.Hour))
+
+	result, err := callTool(HandleSearchDocuments(base), map[string]any{
+		"content": "alpha",
+		"sort":    "relevance",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := unmarshalSearch(t, result)
+	if len(got) != 2 {
+		t.Fatalf("expected 2, got %d", len(got))
+	}
+	if got[0].Type != "rfc" {
+		t.Errorf("sort=relevance first type = %q, want rfc (rank 3 vs doc rank 17)", got[0].Type)
+	}
+	if got[1].Type != "doc" {
+		t.Errorf("sort=relevance second type = %q, want doc", got[1].Type)
 	}
 }
 
@@ -606,5 +647,94 @@ func TestHandleSearchDocuments_LazyBodyLoad(t *testing.T) {
 	}
 	if len(got[0].Matches) != 0 {
 		t.Errorf("pure metadata query should yield empty matches, got %d", len(got[0].Matches))
+	}
+}
+
+func TestHandleSearchDocuments_UnknownTypeReturnsEmpty(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.rule.md",
+		"---\ntitle: A\nstatus: accepted\n---\n\nbody")
+
+	result, err := callTool(HandleSearchDocuments(base), map[string]any{
+		"types": []any{"nonexistent"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := unmarshalSearch(t, result)
+	if len(got) != 0 {
+		t.Errorf("expected 0 matches for unknown type, got %d", len(got))
+	}
+}
+
+func TestHandleSearchDocuments_EmptyBodyNoMatch(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.rule.md",
+		"---\ntitle: A\nstatus: accepted\n---\n\n")
+
+	result, err := callTool(HandleSearchDocuments(base), map[string]any{
+		"path_ref": "@src/payments/",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := unmarshalSearch(t, result)
+	if len(got) != 0 {
+		t.Errorf("expected 0 matches for empty body, got %d", len(got))
+	}
+}
+
+func TestHandleSearchDocuments_RelevanceMtimeTiebreak(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "older.rule.md",
+		"---\ntitle: Older\nstatus: accepted\n---\n\nalpha is in the body")
+	writeDoc(t, base, "knowledge", "newer.rule.md",
+		"---\ntitle: Newer\nstatus: accepted\n---\n\nalpha is in the body")
+
+	setMtime(t, base, ".archcore/knowledge/older.rule.md", time.Now().Add(-2*time.Hour))
+	setMtime(t, base, ".archcore/knowledge/newer.rule.md", time.Now().Add(-1*time.Hour))
+
+	result, err := callTool(HandleSearchDocuments(base), map[string]any{
+		"content": "alpha",
+		"sort":    "relevance",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := unmarshalSearch(t, result)
+	if len(got) != 2 {
+		t.Fatalf("expected 2, got %d", len(got))
+	}
+	if got[0].Title != "Newer" {
+		t.Errorf("got[0].Title = %q, want %q (newer wins tiebreak)", got[0].Title, "Newer")
+	}
+	if got[1].Title != "Older" {
+		t.Errorf("got[1].Title = %q, want %q", got[1].Title, "Older")
+	}
+}
+
+func TestHandleSearchDocuments_MtimeAfterZeroDays(t *testing.T) {
+	t.Parallel()
+	base := setupTestArchcore(t)
+	writeDoc(t, base, "knowledge", "a.adr.md",
+		"---\ntitle: A\nstatus: accepted\n---\n\nbody")
+	setMtime(t, base, ".archcore/knowledge/a.adr.md", time.Now().Add(-time.Minute))
+
+	result, err := callTool(HandleSearchDocuments(base), map[string]any{
+		"mtime_after": "0d",
+		"status":      "accepted",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError {
+		t.Fatalf("unexpected error result on mtime_after=0d")
+	}
+	got := unmarshalSearch(t, result)
+	if len(got) != 0 {
+		t.Errorf("expected 0 matches for mtime_after=0d, got %d", len(got))
 	}
 }
