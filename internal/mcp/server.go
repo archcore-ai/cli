@@ -46,6 +46,9 @@ Use tags when a document is relevant to multiple teams or domains.
   Tags narrow results but don't guarantee completeness — combine with type/category filters.
   If a tag-filtered query returns 0 results, retry without the tag filter.
 
+WHEN TO SEARCH CONTENT:
+Use search_documents to find documents by path reference, content substring, or metadata filters — not by topic guess. Unlike list_documents, it scans bodies. Prefer it over grep over .archcore/ when you need "which docs mention X".
+
 PATH FORMAT: All tool paths use ".archcore/<path>/<slug>.<type>.md" as returned by list_documents. The add_relation and remove_relation tools also accept paths without the ".archcore/" prefix.
 
 WORKFLOW RULES:
@@ -170,6 +173,7 @@ func NewServer(baseDir string) *server.MCPServer {
 	s.AddTool(tools.NewInitProjectTool(), tools.HandleInitProject(baseDir))
 	s.AddTool(tools.NewListDocumentsTool(), tools.HandleListDocuments(baseDir))
 	s.AddTool(tools.NewGetDocumentTool(), tools.HandleGetDocument(baseDir))
+	s.AddTool(tools.NewSearchDocumentsTool(), tools.HandleSearchDocuments(baseDir))
 	s.AddTool(tools.NewCreateDocumentTool(), tools.HandleCreateDocument(baseDir))
 	s.AddTool(tools.NewUpdateDocumentTool(), tools.HandleUpdateDocument(baseDir))
 	s.AddTool(tools.NewRemoveDocumentTool(), tools.HandleRemoveDocument(baseDir))

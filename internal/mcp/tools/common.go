@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"archcore-cli/templates"
 
@@ -29,19 +30,34 @@ type EnrichedDocument struct {
 
 // LocalDocument represents a document discovered in .archcore/.
 type LocalDocument struct {
-	Path     string   `json:"path"`               // relative: ".archcore/auth/jwt-strategy.adr.md"
-	Category string   `json:"category"`            // virtual: vision, knowledge, experience (derived from type)
-	Type     string   `json:"type"`                // adr, rfc, rule...
-	Filename string   `json:"filename"`            // "jwt-strategy.adr.md"
-	Slug     string   `json:"slug"`                // "jwt-strategy"
-	Title    string   `json:"title,omitempty"`      // from frontmatter
-	Status   string   `json:"status,omitempty"`     // from frontmatter
-	Tags     []string `json:"tags,omitempty"`       // from frontmatter
-	Content  string   `json:"content,omitempty"`    // full markdown (optional)
+	Path     string    `json:"path"`              // relative: ".archcore/auth/jwt-strategy.adr.md"
+	Category string    `json:"category"`          // virtual: vision, knowledge, experience (derived from type)
+	Type     string    `json:"type"`              // adr, rfc, rule...
+	Filename string    `json:"filename"`          // "jwt-strategy.adr.md"
+	Slug     string    `json:"slug"`              // "jwt-strategy"
+	Title    string    `json:"title,omitempty"`   // from frontmatter
+	Status   string    `json:"status,omitempty"`  // from frontmatter
+	Tags     []string  `json:"tags,omitempty"`    // from frontmatter
+	ModTime  time.Time `json:"mtime,omitzero"`    // file modification time
+	Content  string    `json:"content,omitempty"` // full markdown (optional)
 }
 
 // ScanDocuments discovers all .md files recursively inside .archcore/.
 func ScanDocuments(baseDir string) ([]LocalDocument, error) {
+	return scanDocuments(baseDir, false)
+}
+
+// ScanDocumentsFull mirrors ScanDocuments but also populates the Content field
+// for every document. Frontmatter is parsed from the same bytes read from disk,
+// so this performs no extra I/O compared to ScanDocuments.
+func ScanDocumentsFull(baseDir string) ([]LocalDocument, error) {
+	return scanDocuments(baseDir, true)
+}
+
+// scanDocuments walks .archcore/ once. When includeContent is false the
+// frontmatter parse is still fed from the full-file read (same as the previous
+// behavior), but the body is discarded.
+func scanDocuments(baseDir string, includeContent bool) ([]LocalDocument, error) {
 	archcoreDir := filepath.Join(baseDir, ".archcore")
 	var docs []LocalDocument
 
@@ -50,22 +66,41 @@ func ScanDocuments(baseDir string) ([]LocalDocument, error) {
 
 		docType := templates.ExtractDocType(name)
 		category := templates.CategoryForType(templates.DocumentType(docType))
-		title, status, tags := extractFrontmatter(path)
 		slug := templates.ExtractSlug(name)
+
+		data, readErr := os.ReadFile(path)
+		var fm templates.Frontmatter
+		if readErr == nil {
+			fm, _ = templates.SplitDocument(data)
+		} else {
+			fmt.Fprintf(os.Stderr, "scanDocuments: failed to read %s: %v\n", path, readErr)
+		}
+
+		var modTime time.Time
+		if info, infoErr := d.Info(); infoErr == nil {
+			modTime = info.ModTime()
+		} else {
+			fmt.Fprintf(os.Stderr, "scanDocuments: failed to stat %s: %v\n", path, infoErr)
+		}
 
 		relPath, _ := filepath.Rel(baseDir, path)
 		relPath = filepath.ToSlash(relPath)
 
-		docs = append(docs, LocalDocument{
+		doc := LocalDocument{
 			Path:     relPath,
 			Category: category,
 			Type:     docType,
 			Filename: name,
 			Slug:     slug,
-			Title:    title,
-			Status:   status,
-			Tags:     tags,
-		})
+			Title:    fm.Title,
+			Status:   fm.Status,
+			Tags:     fm.Tags,
+			ModTime:  modTime,
+		}
+		if includeContent && readErr == nil {
+			doc.Content = string(data)
+		}
+		docs = append(docs, doc)
 		return nil
 	})
 
@@ -89,6 +124,11 @@ func ReadDocumentContent(baseDir, relPath string) (LocalDocument, error) {
 	fm, _ := templates.SplitDocument(data)
 	slug := templates.ExtractSlug(filename)
 
+	var modTime time.Time
+	if info, statErr := os.Stat(absPath); statErr == nil {
+		modTime = info.ModTime()
+	}
+
 	return LocalDocument{
 		Path:     relPath,
 		Category: category,
@@ -98,6 +138,7 @@ func ReadDocumentContent(baseDir, relPath string) (LocalDocument, error) {
 		Title:    fm.Title,
 		Status:   fm.Status,
 		Tags:     fm.Tags,
+		ModTime:  modTime,
 		Content:  string(data),
 	}, nil
 }
@@ -186,12 +227,3 @@ func validateArchcorePath(relPath string) (string, error) {
 	return cleaned, nil
 }
 
-// extractFrontmatter reads the YAML frontmatter to extract title, status, and tags.
-func extractFrontmatter(path string) (title, status string, tags []string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", "", nil
-	}
-	fm, _ := templates.SplitDocument(data)
-	return fm.Title, fm.Status, fm.Tags
-}
