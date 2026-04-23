@@ -5,6 +5,14 @@ tags:
   - "testing"
 ---
 
+## Status
+
+**Layer A (Tier 1 in this idea's terminology) shipped 2026-04-23** as in-process MCP integration tests at `internal/mcp/integration/`. See `code-quality/in-process-mcp-integration-tests.adr.md` for the decision record.
+
+The shipped Layer A diverges from the original Tier 1 sketch below in one mechanism: tests run **in-process** via `mcp-go`'s `client.NewInProcessClient` (sub-second, no subprocess, no build tag) rather than calling `archcore mcp` as a subprocess over real stdio. The subprocess approach remains valid as a future Layer B for catching CLI command wiring + stdio framing bugs. Tier 2 (Agent) remains future work.
+
+The text below preserves the original idea as historical record; its Tier 1 design is **not** the current implementation.
+
 ## Idea
 
 Add end-to-end tests that verify the full user journey through archcore CLI — from `init` through hook-driven agent context delivery and MCP tool interactions — complementing the existing unit test suite which validates individual functions in isolation.

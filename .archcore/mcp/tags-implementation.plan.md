@@ -9,6 +9,26 @@ Add optional `tags` field to document frontmatter enabling cross-cutting categor
 
 **Problem:** A document like `e2e-auth-flow.rule.md` is relevant to both frontend and backend teams. Directory structure is one-dimensional — the file can only live in one folder. Tags allow multi-axis annotation without duplicating directories.
 
+## Sprint Status
+
+### ✅ Sprint 1 — Tags in frontmatter — DONE
+
+Shipped in commit `1558381 feat: tags to documents in frontmatter` (and follow-ups).
+
+Delivered (mapping to Phases below):
+
+- **Phase 1 (Parser + data structures)** — `Frontmatter` struct with `Title`, `Status`, `Tags` in `templates/`; `SplitDocument` returns `(Frontmatter, body)`; `LocalDocument.Tags` with `json:"tags,omitempty"`; `validateTags` / `parseTags` / `normalizeTags` helpers in `internal/mcp/tools/common.go`; `buildDocumentFile` emits sorted/deduplicated YAML block. ✅
+- **Phase 2 (MCP tools)** — `tags` parameter on `create_document`, `update_document`, `list_documents` (OR semantics for filter). `update_document` evolved beyond the original "replace" semantics into a three-way contract (omit / `[]` / `[values]`) — codified separately as `mcp/tag-update-semantics.rule.md`. ✅ (with documented evolution)
+- **Phase 3 (Session context)** — `EXISTING TAGS:` line injected via `cmd/hooks_common.go`. ✅
+- **Phase 4 (Sync)** — `SyncFrontmatter.Tags` plumbed through `internal/sync/payload.go`. ✅
+- **Phase 5 (MCP server instructions)** — TAGS block added to `mcpServerInstructions` in `internal/mcp/server.go`. ✅
+- **Phase 6 (Doctor hygiene checks)** — **PARTIAL.** Tag format is validated inline by `cmd/status.go:185` (rejects malformed tags). The remaining hygiene checks proposed in Task 13 — singleton-tag warnings (possible typos) and a unique tag count summary — are NOT implemented in `cmd/doctor.go`. Track as a follow-up if tag sprawl becomes observable.
+
+### Follow-Ups (deferred, not blocking)
+
+- Singleton-tag warnings + unique tag count in `archcore doctor` (Phase 6 remainder).
+- Tag-aware merge semantics for future two-way sync (set-union per the original Risks section).
+
 ## Key Design Decisions
 
 - **No `list_tags` MCP tool** — tags surface via `list_documents` filter + session context injection at session start. Rationale: avoids tool proliferation (9→8 tools), eliminates redundant filesystem scan, session context already provides tag discoverability.
@@ -34,6 +54,8 @@ tags:
 Tags are optional. When absent, field is omitted from JSON output (`omitempty`).
 
 ## Tasks
+
+> The following task list is preserved as historical record. See **Sprint Status** above for what actually shipped.
 
 ### Phase 1: Parser + Data Structures
 

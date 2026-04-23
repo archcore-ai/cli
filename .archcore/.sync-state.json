@@ -632,6 +632,31 @@
       "source": "mcp/search-documents.spec.md",
       "target": "mcp/search-documents-implementation.plan.md",
       "type": "implements"
+    },
+    {
+      "source": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "target": "code-quality/e2e-testing-for-cli.idea.md",
+      "type": "implements"
+    },
+    {
+      "source": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "target": "code-quality/unit-testing-patterns.guide.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "target": "mcp/search-documents.spec.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "target": "mcp/tag-update-semantics.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "target": "code-quality/go-code-quality.rule.md",
+      "type": "related"
     }
   ]
 }
