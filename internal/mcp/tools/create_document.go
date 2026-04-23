@@ -89,11 +89,9 @@ If you provide content, you MUST include the required sections for the chosen ty
 			mcp.Description(`Optional. Add tags when the document is relevant to multiple teams or domains. Lowercase alphanumeric with hyphens, underscores, colons, or pipes (e.g. "frontend", "team-platform", "team:payments", "some|flag").`),
 			mcp.WithStringItems(),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:           "Create Document",
-			ReadOnlyHint:    mcp.ToBoolPtr(false),
-			DestructiveHint: mcp.ToBoolPtr(false),
-		}),
+		mcp.WithTitleAnnotation("Create Document"),
+		mcp.WithReadOnlyHintAnnotation(false),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 }
 

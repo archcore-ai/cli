@@ -47,10 +47,8 @@ Both source and target must be existing documents. Paths can be given with or wi
 			mcp.Required(),
 			mcp.Enum(sync.ValidRelationTypes()...),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "Add Relation",
-			ReadOnlyHint: mcp.ToBoolPtr(false),
-		}),
+		mcp.WithTitleAnnotation("Add Relation"),
+		mcp.WithReadOnlyHintAnnotation(false),
 	)
 }
 
@@ -117,8 +115,6 @@ func HandleAddRelation(baseDir string) func(ctx context.Context, request mcp.Cal
 		if err != nil {
 			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }

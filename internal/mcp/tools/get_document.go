@@ -29,10 +29,8 @@ Use this tool when you need to:
 			mcp.Description(`Relative path to the document from the project root. Must be obtained from list_documents — do not construct this manually. Example: ".archcore/knowledge/use-postgres.adr.md"`),
 			mcp.Required(),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "Get Document",
-			ReadOnlyHint: mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("Get Document"),
+		mcp.WithReadOnlyHintAnnotation(true),
 	)
 }
 
@@ -83,8 +81,6 @@ func HandleGetDocument(baseDir string) func(ctx context.Context, request mcp.Cal
 			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }

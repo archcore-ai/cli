@@ -32,10 +32,8 @@ Returns: {"removed": true} if found and removed, {"removed": false} if not found
 			mcp.Required(),
 			mcp.Enum(sync.ValidRelationTypes()...),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "Remove Relation",
-			ReadOnlyHint: mcp.ToBoolPtr(false),
-		}),
+		mcp.WithTitleAnnotation("Remove Relation"),
+		mcp.WithReadOnlyHintAnnotation(false),
 	)
 }
 
@@ -88,8 +86,6 @@ func HandleRemoveRelation(baseDir string) func(ctx context.Context, request mcp.
 			"removed": removed,
 		}
 		data, _ := json.Marshal(result)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }

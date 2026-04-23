@@ -39,11 +39,9 @@ Returns: JSON with path, title, type, category, and relations_removed count.`),
 			mcp.Description("Relative path to the document from the project root. Must be obtained from list_documents — do not construct this manually. Example: \".archcore/knowledge/use-postgres.adr.md\""),
 			mcp.Required(),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:           "Remove Document",
-			ReadOnlyHint:    mcp.ToBoolPtr(false),
-			DestructiveHint: mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("Remove Document"),
+		mcp.WithReadOnlyHintAnnotation(false),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 }
 
@@ -102,8 +100,6 @@ func HandleRemoveDocument(baseDir string) func(ctx context.Context, request mcp.
 			return nil, fmt.Errorf("marshaling result: %w", err)
 		}
 
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(jsonData))},
-		}, nil
+		return mcp.NewToolResultText(string(jsonData)), nil
 	}
 }

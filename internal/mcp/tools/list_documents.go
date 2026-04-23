@@ -38,10 +38,8 @@ Use the returned paths directly as input to get_document. Do not construct paths
 			mcp.Description("Filter by tags. Returns documents that have at least one of the specified tags (OR semantics)."),
 			mcp.WithStringItems(),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "List Documents",
-			ReadOnlyHint: mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("List Documents"),
+		mcp.WithReadOnlyHintAnnotation(true),
 	)
 }
 

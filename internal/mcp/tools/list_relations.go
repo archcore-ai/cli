@@ -19,10 +19,8 @@ Optionally filter by a specific document path (with or without ".archcore/" pref
 		mcp.WithString("path",
 			mcp.Description("Optional document path to filter relations for. Returns all relations if omitted."),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "List Relations",
-			ReadOnlyHint: mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("List Relations"),
+		mcp.WithReadOnlyHintAnnotation(true),
 	)
 }
 
@@ -35,9 +33,7 @@ func HandleListRelations(baseDir string) func(ctx context.Context, request mcp.C
 			// If manifest can't be loaded, return empty relations.
 			result := map[string]any{"relations": []sync.Relation{}}
 			data, _ := json.Marshal(result)
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{mcp.NewTextContent(string(data))},
-			}, nil
+			return mcp.NewToolResultText(string(data)), nil
 		}
 
 		var relations []sync.Relation
@@ -69,8 +65,6 @@ func HandleListRelations(baseDir string) func(ctx context.Context, request mcp.C
 
 		result := map[string]any{"relations": relations}
 		data, _ := json.Marshal(result)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{mcp.NewTextContent(string(data))},
-		}, nil
+		return mcp.NewToolResultText(string(data)), nil
 	}
 }

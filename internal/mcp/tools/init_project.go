@@ -38,12 +38,10 @@ Returns: JSON with { initialized: true, settings: {...}, already_initialized: bo
 		mcp.WithString("archcore_url",
 			mcp.Description(`Required only when sync_mode="on-prem". The URL of the on-prem Archcore server.`),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:           "Initialize Project",
-			ReadOnlyHint:    mcp.ToBoolPtr(false),
-			DestructiveHint: mcp.ToBoolPtr(false),
-			IdempotentHint:  mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("Initialize Project"),
+		mcp.WithReadOnlyHintAnnotation(false),
+		mcp.WithDestructiveHintAnnotation(false),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 }
 

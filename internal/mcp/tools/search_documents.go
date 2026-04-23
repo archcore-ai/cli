@@ -130,10 +130,8 @@ func NewSearchDocumentsTool() mcp.Tool {
 		mcp.WithNumber("limit",
 			mcp.Description("Maximum number of results to return. Default 50, max 200. Values above 200 are clamped; 0 or omitted both map to the default."),
 		),
-		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title:        "Search Documents",
-			ReadOnlyHint: mcp.ToBoolPtr(true),
-		}),
+		mcp.WithTitleAnnotation("Search Documents"),
+		mcp.WithReadOnlyHintAnnotation(true),
 	)
 }
 
