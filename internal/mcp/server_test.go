@@ -71,6 +71,31 @@ func TestNewServer_WithLanguageSetting(t *testing.T) {
 	}
 }
 
+func TestBuildInstructions_HasWorkflowPromptsBlock(t *testing.T) {
+	t.Parallel()
+	promptNames := []string{
+		"iso_track",
+		"sources_track",
+		"product_track",
+		"standard_track",
+		"architecture_track",
+	}
+	for _, lang := range []string{"", "en", "ru"} {
+		result := buildInstructions(lang)
+		if !strings.Contains(result, "WORKFLOW PROMPTS") {
+			t.Errorf("buildInstructions(%q): missing WORKFLOW PROMPTS block", lang)
+		}
+		if got := strings.Count(result, "WORKFLOW PROMPTS"); got != 1 {
+			t.Errorf("buildInstructions(%q): WORKFLOW PROMPTS appears %d times, want 1", lang, got)
+		}
+		for _, name := range promptNames {
+			if !strings.Contains(result, name) {
+				t.Errorf("buildInstructions(%q): missing prompt name %q", lang, name)
+			}
+		}
+	}
+}
+
 func TestNewServer_MissingSettings_FallsBack(t *testing.T) {
 	t.Parallel()
 	base := t.TempDir()

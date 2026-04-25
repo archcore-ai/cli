@@ -6,6 +6,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 
 	"archcore-cli/internal/config"
+	"archcore-cli/internal/mcp/prompts"
 	"archcore-cli/internal/mcp/tools"
 )
 
@@ -143,6 +144,14 @@ Documents may reference source code paths using @-notation (e.g., @cmd/sync.go, 
 This is optional but encouraged — it helps agents navigate between documentation and code, and enables future staleness detection.
 When writing or updating documents, include relevant code paths where they naturally fit (e.g., in "Implementation Notes", "Key files", "Related" sections).
 
+WORKFLOW PROMPTS (when client supports MCP prompts):
+  iso_track          — BRS → StRS → SyRS → SRS cascade
+  sources_track      — MRD → BRD → URD discovery flow
+  product_track      — PRD → plan
+  standard_track     — ADR → rule → guide
+  architecture_track — ADR → spec → plan
+If the user's request matches one of these patterns and the client exposes MCP prompts, prefer suggesting the matching prompt over manual orchestration. Otherwise, follow the cascade manually using create_document and add_relation.
+
 NEVER create documents for: temporary notes, questions, chat summaries, or speculative content without clear value.
 ALWAYS use a descriptive slug (lowercase, hyphens only) and a clear human-readable title.`
 
@@ -168,6 +177,7 @@ func NewServer(baseDir string) *server.MCPServer {
 		"archcore",
 		"1.0.0",
 		server.WithInstructions(buildInstructions(language)),
+		server.WithPromptCapabilities(true),
 	)
 
 	s.AddTool(tools.NewInitProjectTool(), tools.HandleInitProject(baseDir))
@@ -180,6 +190,8 @@ func NewServer(baseDir string) *server.MCPServer {
 	s.AddTool(tools.NewAddRelationTool(), tools.HandleAddRelation(baseDir))
 	s.AddTool(tools.NewRemoveRelationTool(), tools.HandleRemoveRelation(baseDir))
 	s.AddTool(tools.NewListRelationsTool(), tools.HandleListRelations(baseDir))
+
+	prompts.RegisterAll(s)
 
 	return s
 }

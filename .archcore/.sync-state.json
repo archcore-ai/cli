@@ -657,6 +657,51 @@
       "source": "code-quality/in-process-mcp-integration-tests.adr.md",
       "target": "code-quality/go-code-quality.rule.md",
       "type": "related"
+    },
+    {
+      "source": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "target": "mcp/track-cascade-invocation-via-mcp.idea.md",
+      "type": "implements"
+    },
+    {
+      "source": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "target": "mcp/mcp-server-starts-without-archcore-dir.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "target": "relations/no-auto-relations-on-create-document.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "target": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "type": "depends_on"
+    },
+    {
+      "source": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "target": "cli/mcp-token-optimization.idea.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/mcp-prompts-orchestration-only.rule.md",
+      "target": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "type": "implements"
+    },
+    {
+      "source": "mcp/adding-mcp-track-prompts.guide.md",
+      "target": "mcp/mcp-prompts-orchestration-only.rule.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/adding-mcp-track-prompts.guide.md",
+      "target": "mcp/mcp-prompts-for-tracks-only.adr.md",
+      "type": "related"
+    },
+    {
+      "source": "mcp/adding-mcp-track-prompts.guide.md",
+      "target": "code-quality/in-process-mcp-integration-tests.adr.md",
+      "type": "depends_on"
     }
   ]
 }
