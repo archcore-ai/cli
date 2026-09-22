@@ -1,5 +1,9 @@
 # Archcore CLI — Git-Native Context for AI Coding Agents
 
+> **Archcore moved to [github.com/archcore-ai/archcore](https://github.com/archcore-ai/archcore).**
+> This repository is archived. The CLI now lives under [`cli/`](https://github.com/archcore-ai/archcore/tree/dev/cli) in that repository, beside the plugin, and every release from v0.10.1 on is published at [archcore-ai/archcore/releases](https://github.com/archcore-ai/archcore/releases).
+> Install or update with `curl -fsSL https://archcore.ai/install.sh | bash` on macOS, Linux, and WSL, or `irm https://archcore.ai/install.ps1 | iex` on Windows. A binary installed from this repository (v0.8.7 or earlier) no longer self-updates; run the installer once to move to the new channel. Issues: [archcore-ai/archcore/issues](https://github.com/archcore-ai/archcore/issues).
+
 <!-- PLACEHOLDER: centered logo/wordmark, ~300px, light/dark variants via <picture>.
      Alt text should carry the tagline: "Archcore — git-native context for AI coding agents" -->
 
